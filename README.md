@@ -41,10 +41,10 @@ Injera Gebeya is an online marketplace designed to connect local Injera sellers 
 
 ## Technologies Used
 
-- **Frontend:** (e.g., React, Vue.js, HTML, CSS, JavaScript) - _[Specify the actual frontend technology used]_
-- **Backend:** Node.js with Express.js - _[Confirm and specify other backend frameworks/libraries]_
-- **Database:** (e.g., MongoDB, PostgreSQL) - _[Specify the database used]_
-- **Other:** (e.g., Tailwind CSS for styling) - _[List any other significant technologies]_
+- **Frontend:** (e.g., React, Vue.js, HTML, CSS, JavaScript)
+- **Backend:** Node.js with Express.js
+- **Database:** (e.g., MongoDB, PostgreSQL)
+- **Other:** (e.g., Tailwind CSS for styling)
 
 ## Setup and Installation
 
