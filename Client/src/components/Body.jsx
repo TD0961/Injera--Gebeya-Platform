@@ -1,7 +1,10 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+
 
 const Body = () => {
+  const navigate = useNavigate(); 
   return (
     <div className="relative min-h-screen">
       {/* Background Image */}
@@ -27,7 +30,9 @@ const Body = () => {
             Fresh, authentic, and delivered to your doorstep.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="px-8 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-full font-semibold flex items-center justify-center gap-2 transition-all">
+            <button 
+            onClick={() => navigate("/signup")} 
+            className="px-8 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-full font-semibold flex items-center justify-center gap-2 transition-all">
               Shop Now
               <ArrowRight className="h-5 w-5" />
             </button>

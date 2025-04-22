@@ -1,11 +1,12 @@
-const express = require('express');
-const app = express();
-const port = 3000; // You can choose any port
+const app = require("./app");
+const dotenv = require("dotenv");
+const connectDB = require("./config/db");
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+// Connect to the database
+connectDB();
 
-app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
