@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios"; // Import Axios
-import { ToastContainer, toast } from "react-toastify"; // Import Toastify
-import "react-toastify/dist/ReactToastify.css"; // Import Toastify CSS
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -15,11 +15,11 @@ function ForgotPasswordForm() {
         email,
       });
 
-      // Handle success response
-      toast.success(response.data.message || "Password reset email sent!");
+      // Show success toast if email exists
+      toast.success(response.data.message || "Check your email for the password reset link!");
       setEmail(""); // Clear the email field
     } catch (error) {
-      // Handle error response
+      // Show error toast if email does not exist or other errors occur
       console.error("Error:", error);
       toast.error(error.response?.data?.message || "An error occurred. Please try again.");
     }
@@ -29,9 +29,7 @@ function ForgotPasswordForm() {
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-gray-700 font-medium text-lg">
-            Email
-          </label>
+          <label className="block text-gray-700 font-medium text-lg">Email</label>
           <input
             type="email"
             value={email}
@@ -48,7 +46,7 @@ function ForgotPasswordForm() {
           Reset Password
         </button>
       </form>
-      <ToastContainer /> {/* Add ToastContainer to render toasts */}
+      <ToastContainer />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify"; 
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function SignupForm() {
@@ -13,6 +13,7 @@ function SignupForm() {
   });
 
   const [passwordStrength, setPasswordStrength] = useState(""); // State for password strength
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,22 +50,29 @@ function SignupForm() {
 
     try {
       // Send POST request using Axios
-      const response = await axios.post("http://localhost:5000/api/users/signup", {
+      const response = await axios.post("http://localhost:3000/api/users/signup", {
         name: formData.name,
         email: formData.email,
         password: formData.password,
       });
 
       // Handle success response
-      toast.success("Signup successful!"); // Show success toast
+      toast.success("Signup successful! Redirecting to login..."); // Show success toast
       console.log(response.data);
+
+      // Reset form and password strength
       setFormData({
         name: "",
         email: "",
         password: "",
         confirmPassword: "",
       });
-      setPasswordStrength(""); // Reset password strength
+      setPasswordStrength("");
+
+      // Navigate to the login page after a short delay
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000); // 2-second delay for the toast to display
     } catch (error) {
       // Handle error response
       console.error("Error:", error);

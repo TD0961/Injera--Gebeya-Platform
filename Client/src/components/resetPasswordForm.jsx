@@ -3,7 +3,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-function ResetPasswordForm({ match }) {
+function ResetPasswordForm({ token, onSuccess }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -16,11 +16,13 @@ function ResetPasswordForm({ match }) {
     }
 
     try {
-      const response = await axios.post(`http://localhost:5000/api/users/reset-password/${match.params.token}`, {
+      // Send POST request to the backend
+      const response = await axios.post(`http://localhost:3000/api/users/reset-password/${token}`, {
         password,
       });
 
       toast.success(response.data.message || "Password reset successful!");
+      onSuccess(); // Call the success callback (e.g., redirect to login)
     } catch (error) {
       console.error("Error:", error);
       toast.error(error.response?.data?.message || "An error occurred. Please try again.");
