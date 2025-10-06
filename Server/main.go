@@ -1,25 +1,40 @@
 package main
 
 import (
-	"fmt"
 	"injera-gebeya-platform/Server/config"
+	"injera-gebeya-platform/Server/handlers"
+	"injera-gebeya-platform/Server/models"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
 	app := fiber.New()
 
-	// Connect to database and check if successful
+	// Allow frontend requests
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:5174",
+		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+	}))
+
+	// Connect to database
 	config.ConnectDatabase()
 
+	// Run migrations ONCE at startup
+	config.DB.AutoMigrate(&models.User{})
+
+	// Routes
 	app.Get("/", func(c *fiber.Ctx) error {
-		if config.DB != nil {
-			fmt.Println("✅ Database connection established successfully!")
-			fmt.Println("🚀 Server listening at http://localhost:3000")
-		}
 		return c.SendString("Server running!")
 	})
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"status": "ok"})
+	})
+
+	app.Post("/api/register", handlers.Register)
 
 	app.Listen(":3000")
 }
