@@ -36,5 +36,7 @@ func main() {
 
 	app.Post("/api/register", handlers.Register)
 
+	app.Post("/api/login", handlers.Login)
+
 	app.Listen(":3000")
 }
