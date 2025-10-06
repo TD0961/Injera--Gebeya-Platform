@@ -1,17 +1,25 @@
 package main
 
 import (
-    "github.com/gofiber/fiber/v2"
-    "Injera--Gebeya-Platform/Server/config"
+	"fmt"
+	"injera-gebeya-platform/Server/config"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
-    app := fiber.New()
-    config.ConnectDatabase()
+	app := fiber.New()
 
-    app.Get("/", func(c *fiber.Ctx) error {
-        return c.SendString("Server running!")
-    })
+	// Connect to database and check if successful
+	config.ConnectDatabase()
 
-    app.Listen(":3000")
+	app.Get("/", func(c *fiber.Ctx) error {
+		if config.DB != nil {
+			fmt.Println("✅ Database connection established successfully!")
+			fmt.Println("🚀 Server listening at http://localhost:3000")
+		}
+		return c.SendString("Server running!")
+	})
+
+	app.Listen(":3000")
 }
