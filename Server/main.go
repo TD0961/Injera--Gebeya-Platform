@@ -5,6 +5,8 @@ import (
 	"injera-gebeya-platform/Server/handlers"
 	"injera-gebeya-platform/Server/models"
 
+	"injera-gebeya-platform/Server/middleware"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
@@ -24,6 +26,7 @@ func main() {
 
 	// Run migrations ONCE at startup
 	config.DB.AutoMigrate(&models.User{})
+	config.DB.AutoMigrate(&models.Product{})
 
 	// Routes
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -37,6 +40,10 @@ func main() {
 	app.Post("/api/register", handlers.Register)
 
 	app.Post("/api/login", handlers.Login)
+
+	app.Post("/seller/products", middleware.RequireAuth, handlers.CreateProduct)
+
+	// Start server
 
 	app.Listen(":3000")
 }

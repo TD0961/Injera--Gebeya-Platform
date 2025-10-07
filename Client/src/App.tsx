@@ -4,6 +4,7 @@ import BuyerSignup from './pages/BuyerSignup';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import SellerSignup from './pages/SellerSignup';
+import SellerDashboard from './pages/SellerDashboard';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/seller-signup" element={<SellerSignup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/seller/dashboard" element={<SellerDashboard />} />
       </Routes>
     </Router>
   );
