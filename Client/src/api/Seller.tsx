@@ -1,17 +1,60 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:4000"; // your Go backend URL
+const API = axios.create({
+  baseURL: "http://localhost:3000", // backend URL
+  withCredentials: true,            // send cookies/session info
+});
 
-export async function getMyProducts(token: string) {
-  const res = await axios.get(`${API_URL}/seller/products`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
+// Fetch all seller products
+export async function getMyProducts() {
+  try {
+    const res = await API.get("/seller/products");
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching products:", err);
+    throw err;
+  }
 }
 
-export async function addProduct(product: any, token: string) {
-  const res = await axios.post(`${API_URL}/seller/products`, product, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
+// Create new product
+export async function createProduct(product: any) {
+  try {
+    const res = await API.post("/seller/products", product);
+    return res.data;
+  } catch (err: any) {
+    console.error("Error creating product:", err.response?.data || err);
+    throw err;
+  }
+}
+
+// Update product
+export async function updateProduct(id: number, product: any) {
+  try {
+    const res = await API.put(`/seller/products/${id}`, product);
+    return res.data;
+  } catch (err: any) {
+    console.error("Error updating product:", err.response?.data || err);
+    throw err;
+  }
+}
+
+// Delete product
+export async function deleteProduct(id: number) {
+  try {
+    const res = await API.delete(`/seller/products/${id}`);
+    return res.data;
+  } catch (err: any) {
+    console.error("Error deleting product:", err.response?.data || err);
+    throw err;
+  }
+}
+// Fetch public products (for buyers)
+export async function getPublicProducts() {
+  try {
+    const res = await API.get("/products");
+    return res.data;
+  } catch (err: any) {
+    console.error("Error fetching public products:", err);
+    throw err;
+  }
 }

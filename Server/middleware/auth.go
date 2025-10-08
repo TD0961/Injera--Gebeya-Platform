@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"fmt"
+	"injera-gebeya-platform/Server/config"
+	"injera-gebeya-platform/Server/models"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,7 +21,11 @@ func RequireAuth(c *fiber.Ctx) error {
 		secret = "supersecret"
 	}
 
+	// Parse and validate token
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
 		return []byte(secret), nil
 	})
 	if err != nil || !token.Valid {
@@ -30,7 +37,19 @@ func RequireAuth(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid claims"})
 	}
 
-	c.Locals("user_id", uint(claims["user_id"].(float64)))
-	c.Locals("role", claims["role"].(string))
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{"error": "Invalid user id in token"})
+	}
+
+	var user models.User
+	if err := config.DB.First(&user, uint(userIDFloat)).Error; err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	c.Locals("user_id", uint(userIDFloat))
+	c.Locals("role", user.Role)
+	c.Locals("user", user) // ✅ Attach full user object
+
 	return c.Next()
 }

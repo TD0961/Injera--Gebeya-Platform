@@ -17,6 +17,8 @@ type Props = {
 export default function ProductTable({ products, onDelete, onUpdate }: Props) {
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState({ name: "", price: "", stock: "" });
+  const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
 
   function startEdit(p: Product) {
     setEditing(p);
@@ -27,16 +29,24 @@ export default function ProductTable({ products, onDelete, onUpdate }: Props) {
     setForm((s) => ({ ...s, [e.target.name]: e.target.value }));
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!editing) return;
+    setSaving(true);
     const updated: Product = {
       ...editing,
       name: form.name || editing.name,
       price: Number(form.price || editing.price),
       stock: Number(form.stock || editing.stock),
     };
-    onUpdate(updated);
+    await onUpdate(updated);
     setEditing(null);
+    setSaving(false);
+  }
+
+  async function handleDelete(id: number) {
+    setLoadingId(id);
+    await onDelete(id);
+    setLoadingId(null);
   }
 
   return (
@@ -53,7 +63,10 @@ export default function ProductTable({ products, onDelete, onUpdate }: Props) {
           </thead>
           <tbody>
             {products.map((p) => (
-              <tr key={p.id} className="border-b last:border-b-0 hover:bg-gray-50">
+              <tr
+                key={p.id}
+                className="border-b last:border-b-0 hover:bg-gray-50 transition"
+              >
                 <td className="p-3">{p.name}</td>
                 <td className="p-3">{p.price} Birr</td>
                 <td className="p-3">{p.stock}</td>
@@ -61,14 +74,18 @@ export default function ProductTable({ products, onDelete, onUpdate }: Props) {
                   <button
                     onClick={() => startEdit(p)}
                     className="px-3 py-1 rounded-md bg-yellow-50 text-yellow-700"
+                    disabled={saving || loadingId !== null}
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => onDelete(p.id)}
-                    className="px-3 py-1 rounded-md bg-red-50 text-red-600"
+                    onClick={() => handleDelete(p.id)}
+                    className={`px-3 py-1 rounded-md bg-red-50 text-red-600 ${
+                      loadingId === p.id ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
+                    disabled={loadingId === p.id}
                   >
-                    Delete
+                    {loadingId === p.id ? "Deleting…" : "Delete"}
                   </button>
                 </td>
               </tr>
@@ -107,10 +124,18 @@ export default function ProductTable({ products, onDelete, onUpdate }: Props) {
           </div>
 
           <div className="flex gap-2">
-            <button onClick={saveEdit} className="px-4 py-2 bg-yellow-400 rounded-md text-white">
-              Save
+            <button
+              onClick={saveEdit}
+              className="px-4 py-2 bg-yellow-400 rounded-md text-white disabled:opacity-70"
+              disabled={saving}
+            >
+              {saving ? "Saving…" : "Save"}
             </button>
-            <button onClick={() => setEditing(null)} className="px-4 py-2 bg-gray-200 rounded-md">
+            <button
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 bg-gray-200 rounded-md"
+              disabled={saving}
+            >
               Cancel
             </button>
           </div>

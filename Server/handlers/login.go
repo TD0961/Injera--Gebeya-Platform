@@ -36,24 +36,27 @@ func Login(c *fiber.Ctx) error {
 	if secret == "" {
 		secret = "supersecret"
 	}
+
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"role":    user.Role,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		"exp":     time.Now().Add(72 * time.Hour).Unix(),
+		"iat":     time.Now().Unix(),
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Could not login"})
 	}
 
-	// Set JWT as HTTP-only cookie
 	c.Cookie(&fiber.Cookie{
 		Name:     "token",
 		Value:    signedToken,
 		Expires:  time.Now().Add(72 * time.Hour),
 		HTTPOnly: true,
-		Secure:   false, // set to true in production with HTTPS
+		Secure:   false, // true in production
+		SameSite: "Lax",
 		Path:     "/",
 	})
 
