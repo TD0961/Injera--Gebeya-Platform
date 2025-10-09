@@ -126,7 +126,7 @@ export default function ProductTable({ products, onDelete, onUpdate }: Props) {
           <div className="flex gap-2">
             <button
               onClick={saveEdit}
-              className="px-4 py-2 bg-yellow-400 rounded-md text-white disabled:opacity-70"
+              className="px-4 py-2 bg-yellow-400 rounded-md text-black disabled:opacity-70"
               disabled={saving}
             >
               {saving ? "Saving…" : "Save"}

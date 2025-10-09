@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type{ Product } from "./ProductTable";
+import { useNavigate } from "react-router-dom"; // ✅ import navigate
+import type { Product } from "./ProductTable";
 
 type Props = {
   onSubmit: (p: Omit<Product, "id">) => void;
@@ -13,6 +14,7 @@ export default function ProductForm({ onSubmit }: Props) {
     image: "",
   });
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); // ✅ initialize navigate
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm((s) => ({ ...s, [e.target.name]: e.target.value }));
@@ -22,14 +24,20 @@ export default function ProductForm({ onSubmit }: Props) {
     e.preventDefault();
     if (!form.name || !form.price || !form.stock) return;
     setLoading(true);
+
     onSubmit({
       name: form.name,
       price: Number(form.price),
       stock: Number(form.stock),
       image: form.image,
     });
+
+    // Reset form
     setForm({ name: "", price: "", stock: "", image: "" });
     setLoading(false);
+
+    // ✅ Navigate to /products after submission
+    navigate("/products");
   }
 
   return (

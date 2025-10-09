@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import SellerSignup from './pages/SellerSignup';
 import SellerDashboard from './pages/SellerDashboard';
+import ProductListing from './pages/ProductListing';
 
 function App() {
   return (
@@ -16,6 +17,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
+        <Route path="/products" element={<ProductListing />} /> 
+
       </Routes>
     </Router>
   );

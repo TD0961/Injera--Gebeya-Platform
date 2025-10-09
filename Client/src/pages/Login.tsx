@@ -31,9 +31,10 @@ export default function Login() {
         if (role === "seller") {
           navigate("/seller/dashboard");
         } else {
-          navigate("/");
+          navigate("/products"); // ✅ Redirect buyer here
         }
       }, 1000);
+
     } catch (err: any) {
       const message =
         err.response?.data?.error || err.message || "Login failed!";
