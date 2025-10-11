@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Search, ShoppingCart, User, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../assets/Logo";
 import bg from "../assets/hero.jpg";
 
@@ -18,21 +19,43 @@ export default function ProductListing() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [cart, setCart] = useState<Product[]>([]);
+  const [cart, setCart] = useState<Product[]>(() => {
+    const saved = localStorage.getItem("cart");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [cartOpen, setCartOpen] = useState(false);
+  const navigate = useNavigate();
 
-  // Fetch products
+  // 🧭 Fetch products
   useEffect(() => {
     axios
       .get("http://localhost:3000/products")
       .then((res) => {
-        setProducts(res.data);
-        setFilteredProducts(res.data);
+        const savedStock = localStorage.getItem("productStock");
+        const storedStock: Record<number, number> = savedStock ? JSON.parse(savedStock) : {};
+
+        const updatedProducts = res.data.map((p: Product) => ({
+          ...p,
+          stock: storedStock[p.id] ?? p.stock,
+        }));
+
+        setProducts(updatedProducts);
+        setFilteredProducts(updatedProducts);
       })
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  // Filter by search
+  // 💾 Persist cart and stock changes
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    const stockMap = Object.fromEntries(products.map((p) => [p.id, p.stock]));
+    localStorage.setItem("productStock", JSON.stringify(stockMap));
+  }, [products]);
+
+  // 🔍 Search filter
   useEffect(() => {
     const filtered = products.filter((p) =>
       p.name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -40,7 +63,7 @@ export default function ProductListing() {
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
-  // Add to cart and decrement stock
+  // 🛒 Add to cart
   const addToCart = (product: Product) => {
     if (product.stock <= 0) return;
 
@@ -49,34 +72,37 @@ export default function ProductListing() {
       return exists ? prev : [...prev, product];
     });
 
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === product.id ? { ...p, stock: p.stock - 1 } : p
-      )
-    );
-
-    setFilteredProducts((prev) =>
-      prev.map((p) =>
-        p.id === product.id ? { ...p, stock: p.stock - 1 } : p
-      )
-    );
+    updateStock(product.id, -1);
   };
 
+  // ❌ Remove from cart
   const removeFromCart = (id: number) => {
+    const removedItem = cart.find((p) => p.id === id);
+    if (removedItem) updateStock(id, +1);
     setCart((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  // ⚙️ Update stock locally
+  const updateStock = (id: number, delta: number) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, stock: p.stock + delta } : p))
+    );
+    setFilteredProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, stock: p.stock + delta } : p))
+    );
   };
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat"
+      className="min-h-screen bg-cover bg-center bg-no-repeat text-white"
       style={{ backgroundImage: `url(${bg})` }}
     >
       {/* HEADER */}
-      <header className="bg-green-800/95 text-white shadow-md fixed top-0 left-0 w-full z-50">
+      <header className="bg-green-800/95 text-white shadow-md fixed top-0 left-0 w-full z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-6 py-3 gap-3 sm:gap-0">
           <div className="flex items-center gap-2">
             <Logo />
-            <h1 className="text-2xl font-bold text-yellow-400">eGebeya</h1>
+            <h1 className="text-2xl font-bold text-yellow-400 tracking-wide">eGebeya</h1>
           </div>
 
           <div className="flex items-center gap-4 flex-wrap justify-center">
@@ -84,7 +110,7 @@ export default function ProductListing() {
               <input
                 type="text"
                 placeholder="Search food..."
-                className="pl-10 pr-4 py-2 rounded-full text-white placeholder-gray-300 bg-green-900 w-64 sm:w-72 focus:ring-2 focus:ring-yellow-400 outline-none"
+                className="pl-10 pr-4 py-2 rounded-full text-white placeholder-gray-300 bg-green-900/80 w-64 sm:w-72 focus:ring-2 focus:ring-yellow-400 outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -118,7 +144,7 @@ export default function ProductListing() {
       {/* PRODUCT GRID */}
       <main className="max-w-6xl mx-auto py-8 px-4">
         {filteredProducts.length === 0 ? (
-          <p className="text-center text-gray-700 mt-10 bg-white/80 rounded-lg p-4 shadow">
+          <p className="text-center text-gray-200 mt-10 bg-green-800/50 rounded-lg p-4 shadow-lg">
             No products found.
           </p>
         ) : (
@@ -126,7 +152,7 @@ export default function ProductListing() {
             {filteredProducts.map((product, idx) => (
               <div
                 key={`prod-${product.id || idx}`}
-                className="bg-white/95 shadow-md rounded-2xl overflow-hidden w-72 transform hover:scale-105 transition-all"
+                className="bg-green-900/90 shadow-lg rounded-2xl overflow-hidden w-72 border border-yellow-500/20 transform hover:scale-105 transition-all hover:shadow-yellow-500/20"
               >
                 <img
                   src={
@@ -140,23 +166,23 @@ export default function ProductListing() {
                   className="w-full h-48 object-cover"
                 />
                 <div className="p-4 text-center">
-                  <h3 className="text-lg font-semibold text-black">{product.name}</h3>
-                  <p className="text-yellow-600 font-bold mt-1">${product.price}</p>
-                  <p className="text-gray-700 mt-1">Stock: {product.stock}</p>
+                  <h3 className="text-lg font-semibold text-yellow-300">{product.name}</h3>
+                  <p className="text-yellow-400 font-bold mt-1">${product.price}</p>
+                  <p className="text-gray-300 mt-1">Stock: {product.stock}</p>
                   {product.shop && (
-                    <p className="text-gray-500 mt-1 text-sm">Shop: {product.shop}</p>
+                    <p className="text-gray-400 mt-1 text-sm">Shop: {product.shop}</p>
                   )}
 
                   {/* Add to Cart or Sold Out */}
                   {product.stock > 0 ? (
                     <button
                       onClick={() => addToCart(product)}
-                      className="mt-3 px-5 py-2 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white transition"
+                      className="mt-3 px-5 py-2 rounded-full bg-yellow-500 hover:bg-yellow-600 text-green-900 font-semibold transition"
                     >
                       Add to Cart
                     </button>
                   ) : (
-                    <div className="mt-3 px-5 py-2 rounded-full bg-gray-400 text-white">
+                    <div className="mt-3 px-5 py-2 rounded-full bg-gray-500/70 text-white font-medium">
                       Sold Out
                     </div>
                   )}
@@ -169,27 +195,31 @@ export default function ProductListing() {
 
       {/* CART DRAWER */}
       {cartOpen && (
-        <div className="fixed inset-0 bg-black/40 flex justify-end z-50">
-          <div className="bg-white w-80 sm:w-96 h-full shadow-lg flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-semibold text-green-800">Your Cart</h2>
+        <div className="fixed inset-0 bg-black/50 flex justify-end z-50 backdrop-blur-sm">
+          <div className="bg-green-950/95 w-80 sm:w-96 h-full shadow-2xl flex flex-col text-yellow-100 rounded-l-2xl animate-slide-left overflow-hidden border-l border-yellow-500/30">
+            <div className="flex justify-between items-center p-4 border-b border-yellow-500/30 bg-green-900/80">
+              <h2 className="text-lg font-semibold text-yellow-300">🛒 Your Cart</h2>
               <X
-                className="cursor-pointer text-gray-600 hover:text-red-500"
+                className="cursor-pointer text-yellow-300 hover:text-yellow-400"
                 onClick={() => setCartOpen(false)}
               />
             </div>
+
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {cart.length === 0 ? (
-                <p className="text-center text-gray-500 mt-10">Your cart is empty.</p>
+                <p className="text-center text-yellow-200 mt-10">Your cart is empty.</p>
               ) : (
                 cart.map((item, i) => (
-                  <div key={`cart-${item.id || i}`} className="flex justify-between items-center border-b pb-2">
+                  <div
+                    key={`cart-${item.id || i}`}
+                    className="flex justify-between items-center bg-green-800/70 p-3 rounded-lg"
+                  >
                     <div>
-                      <p className="font-medium text-gray-800">{item.name}</p>
-                      <p className="text-yellow-600">${item.price}</p>
+                      <p className="font-medium text-yellow-100">{item.name}</p>
+                      <p className="text-yellow-400 font-semibold">${item.price}</p>
                     </div>
                     <button
-                      className="text-sm text-red-500 hover:underline"
+                      className="text-sm text-red-300 hover:text-red-400"
                       onClick={() => removeFromCart(item.id)}
                     >
                       Remove
@@ -198,10 +228,20 @@ export default function ProductListing() {
                 ))
               )}
             </div>
+
             {cart.length > 0 && (
-              <div className="p-4 border-t">
-                <button className="w-full bg-green-800 hover:bg-green-900 text-yellow-400 py-2 rounded-full font-semibold transition">
+              <div className="p-4 border-t border-yellow-500/30 bg-green-900/90">
+                <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-green-900 py-2 rounded-full font-semibold transition">
                   Checkout
+                </button>
+                <button
+                  onClick={() => {
+                    setCartOpen(false);
+                    navigate("/cart");
+                  }}
+                  className="w-full mt-3 bg-yellow-400 hover:bg-yellow-500 text-green-900 py-2 rounded-full font-semibold transition"
+                >
+                  Go to Cart Page
                 </button>
               </div>
             )}

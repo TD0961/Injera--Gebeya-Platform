@@ -6,6 +6,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import SellerSignup from './pages/SellerSignup';
 import SellerDashboard from './pages/SellerDashboard';
 import ProductListing from './pages/ProductListing';
+import Cart from './pages/Cart';
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/products" element={<ProductListing />} /> 
+        <Route path="/cart" element={<Cart />} />
+
 
       </Routes>
     </Router>
