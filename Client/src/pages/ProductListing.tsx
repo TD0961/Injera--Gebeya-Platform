@@ -15,11 +15,16 @@ interface Product {
   image_url?: string;
 }
 
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
 export default function ProductListing() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [cart, setCart] = useState<Product[]>(() => {
+  const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem("cart");
     return saved ? JSON.parse(saved) : [];
   });
@@ -45,7 +50,7 @@ export default function ProductListing() {
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  // 💾 Persist cart and stock changes
+  // 💾 Persist cart and stock
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
@@ -63,26 +68,40 @@ export default function ProductListing() {
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
-  // 🛒 Add to cart
+  // 🛒 Add to cart (with quantity)
   const addToCart = (product: Product) => {
     if (product.stock <= 0) return;
 
     setCart((prev) => {
-      const exists = prev.find((p) => p.id === product.id);
-      return exists ? prev : [...prev, product];
+      const existing = prev.find((item) => item.product.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.product.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
     });
 
     updateStock(product.id, -1);
   };
 
-  // ❌ Remove from cart
-  const removeFromCart = (id: number) => {
-    const removedItem = cart.find((p) => p.id === id);
-    if (removedItem) updateStock(id, +1);
-    setCart((prev) => prev.filter((p) => p.id !== id));
+  // ❌ Remove one from cart
+  const removeOne = (id: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.product.id === id
+            ? { ...item, quantity: item.quantity - 1 }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+    updateStock(id, +1);
   };
 
-  // ⚙️ Update stock locally
+  // ⚙️ Update stock
   const updateStock = (id: number, delta: number) => {
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, stock: p.stock + delta } : p))
@@ -91,6 +110,9 @@ export default function ProductListing() {
       prev.map((p) => (p.id === id ? { ...p, stock: p.stock + delta } : p))
     );
   };
+
+  // 🧮 Total items count
+  const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div
@@ -123,9 +145,9 @@ export default function ProductListing() {
                 onClick={() => setCartOpen(true)}
               >
                 <ShoppingCart className="text-yellow-400 hover:text-yellow-500" size={24} />
-                {cart.length > 0 && (
+                {totalQuantity > 0 && (
                   <span className="absolute -top-2 -right-2 bg-yellow-400 text-green-900 text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
-                    {cart.length}
+                    {totalQuantity}
                   </span>
                 )}
               </div>
@@ -149,9 +171,9 @@ export default function ProductListing() {
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 justify-items-center">
-            {filteredProducts.map((product, idx) => (
+            {filteredProducts.map((product) => (
               <div
-                key={`prod-${product.id || idx}`}
+                key={product.id}
                 className="bg-green-900/90 shadow-lg rounded-2xl overflow-hidden w-72 border border-yellow-500/20 transform hover:scale-105 transition-all hover:shadow-yellow-500/20"
               >
                 <img
@@ -173,7 +195,6 @@ export default function ProductListing() {
                     <p className="text-gray-400 mt-1 text-sm">Shop: {product.shop}</p>
                   )}
 
-                  {/* Add to Cart or Sold Out */}
                   {product.stock > 0 ? (
                     <button
                       onClick={() => addToCart(product)}
@@ -209,18 +230,19 @@ export default function ProductListing() {
               {cart.length === 0 ? (
                 <p className="text-center text-yellow-200 mt-10">Your cart is empty.</p>
               ) : (
-                cart.map((item, i) => (
+                cart.map((item) => (
                   <div
-                    key={`cart-${item.id || i}`}
+                    key={`cart-${item.product.id}`}
                     className="flex justify-between items-center bg-green-800/70 p-3 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium text-yellow-100">{item.name}</p>
-                      <p className="text-yellow-400 font-semibold">${item.price}</p>
+                      <p className="font-medium text-yellow-100">{item.product.name}</p>
+                      <p className="text-yellow-400 font-semibold">${item.product.price}</p>
+                      <p className="text-sm text-gray-300">Qty: {item.quantity}</p>
                     </div>
                     <button
                       className="text-sm text-red-300 hover:text-red-400"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeOne(item.product.id)}
                     >
                       Remove
                     </button>
