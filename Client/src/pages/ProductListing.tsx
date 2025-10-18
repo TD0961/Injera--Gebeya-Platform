@@ -116,7 +116,7 @@ export default function ProductListing() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-no-repeat text-white"
+      className="min-h-screen bg-cover bg-center bg-no-repeat text-gray-900"
       style={{ backgroundImage: `url(${bg})` }}
     >
       {/* HEADER */}
@@ -166,7 +166,7 @@ export default function ProductListing() {
       {/* PRODUCT GRID */}
       <main className="max-w-6xl mx-auto py-8 px-4">
         {filteredProducts.length === 0 ? (
-          <p className="text-center text-gray-200 mt-10 bg-green-800/50 rounded-lg p-4 shadow-lg">
+          <p className="text-center text-gray-700 mt-10 bg-white/70 rounded-lg p-4 shadow-lg">
             No products found.
           </p>
         ) : (
@@ -174,7 +174,7 @@ export default function ProductListing() {
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                className="bg-green-900/90 shadow-lg rounded-2xl overflow-hidden w-72 border border-yellow-500/20 transform hover:scale-105 transition-all hover:shadow-yellow-500/20"
+                className="bg-white shadow-lg rounded-2xl overflow-hidden w-72 border border-yellow-500/20 transform hover:scale-105 transition-all hover:shadow-yellow-500/30"
               >
                 <img
                   src={
@@ -188,11 +188,11 @@ export default function ProductListing() {
                   className="w-full h-48 object-cover"
                 />
                 <div className="p-4 text-center">
-                  <h3 className="text-lg font-semibold text-yellow-300">{product.name}</h3>
-                  <p className="text-yellow-400 font-bold mt-1">${product.price}</p>
-                  <p className="text-gray-300 mt-1">Stock: {product.stock}</p>
+                  <h3 className="text-lg font-semibold text-green-800">{product.name}</h3>
+                  <p className="text-yellow-600 font-bold mt-1">${product.price}</p>
+                  <p className="text-gray-600 mt-1">Stock: {product.stock}</p>
                   {product.shop && (
-                    <p className="text-gray-400 mt-1 text-sm">Shop: {product.shop}</p>
+                    <p className="text-gray-500 mt-1 text-sm">Shop: {product.shop}</p>
                   )}
 
                   {product.stock > 0 ? (
@@ -203,7 +203,7 @@ export default function ProductListing() {
                       Add to Cart
                     </button>
                   ) : (
-                    <div className="mt-3 px-5 py-2 rounded-full bg-gray-500/70 text-white font-medium">
+                    <div className="mt-3 px-5 py-2 rounded-full bg-gray-300 text-gray-700 font-medium">
                       Sold Out
                     </div>
                   )}
@@ -217,31 +217,31 @@ export default function ProductListing() {
       {/* CART DRAWER */}
       {cartOpen && (
         <div className="fixed inset-0 bg-black/50 flex justify-end z-50 backdrop-blur-sm">
-          <div className="bg-green-950/95 w-80 sm:w-96 h-full shadow-2xl flex flex-col text-yellow-100 rounded-l-2xl animate-slide-left overflow-hidden border-l border-yellow-500/30">
-            <div className="flex justify-between items-center p-4 border-b border-yellow-500/30 bg-green-900/80">
-              <h2 className="text-lg font-semibold text-yellow-300">🛒 Your Cart</h2>
+          <div className="bg-white w-80 sm:w-96 h-full shadow-2xl flex flex-col text-green-900 rounded-l-2xl animate-slide-left overflow-hidden border-l border-yellow-500/30">
+            <div className="flex justify-between items-center p-4 border-b border-yellow-500/30 bg-yellow-100">
+              <h2 className="text-lg font-semibold text-green-800">🛒 Your Cart</h2>
               <X
-                className="cursor-pointer text-yellow-300 hover:text-yellow-400"
+                className="cursor-pointer text-green-800 hover:text-yellow-600"
                 onClick={() => setCartOpen(false)}
               />
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {cart.length === 0 ? (
-                <p className="text-center text-yellow-200 mt-10">Your cart is empty.</p>
+                <p className="text-center text-gray-500 mt-10">Your cart is empty.</p>
               ) : (
                 cart.map((item) => (
                   <div
                     key={`cart-${item.product.id}`}
-                    className="flex justify-between items-center bg-green-800/70 p-3 rounded-lg"
+                    className="flex justify-between items-center bg-gray-100 p-3 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium text-yellow-100">{item.product.name}</p>
-                      <p className="text-yellow-400 font-semibold">${item.product.price}</p>
-                      <p className="text-sm text-gray-300">Qty: {item.quantity}</p>
+                      <p className="font-medium text-gray-900">{item.product.name}</p>
+                      <p className="text-yellow-700 font-semibold">${item.product.price}</p>
+                      <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     </div>
                     <button
-                      className="text-sm text-red-300 hover:text-red-400"
+                      className="text-sm text-red-500 hover:text-red-600"
                       onClick={() => removeOne(item.product.id)}
                     >
                       Remove
@@ -252,7 +252,7 @@ export default function ProductListing() {
             </div>
 
             {cart.length > 0 && (
-              <div className="p-4 border-t border-yellow-500/30 bg-green-900/90">
+              <div className="p-4 border-t border-yellow-500/30 bg-yellow-50">
                 <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-green-900 py-2 rounded-full font-semibold transition">
                   Checkout
                 </button>
