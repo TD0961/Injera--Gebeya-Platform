@@ -7,7 +7,6 @@ import App from "./App.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
-    {/* Toast notification container */}
     <Toaster position="top-center" reverseOrder={false} />
   </StrictMode>
 );

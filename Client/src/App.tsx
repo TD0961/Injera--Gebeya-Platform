@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { UserProvider } from './contexts/UserContext';
+import { CartProvider } from './contexts/CartContext';
 import Home from './pages/Home';
 import BuyerSignup from './pages/BuyerSignup';
 import Login from './pages/Login';
@@ -6,24 +8,26 @@ import ForgotPassword from './pages/ForgotPassword';
 import SellerSignup from './pages/SellerSignup';
 import SellerDashboard from './pages/SellerDashboard';
 import ProductListing from './pages/ProductListing';
-import Cart from './pages/Cart';
+import CartPage from './pages/Cart';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/buyer-signup" element={<BuyerSignup />} />
-        <Route path="/seller-signup" element={<SellerSignup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/seller/dashboard" element={<SellerDashboard />} />
-        <Route path="/products" element={<ProductListing />} /> 
-        <Route path="/cart" element={<Cart />} />
-
-
-      </Routes>
-    </Router>
+    <UserProvider>
+      <CartProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/buyer-signup" element={<BuyerSignup />} />
+            <Route path="/seller-signup" element={<SellerSignup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/seller/dashboard" element={<SellerDashboard />} />
+            <Route path="/products" element={<ProductListing />} /> 
+            <Route path="/cart" element={<CartPage />} />
+          </Routes>
+        </Router>
+      </CartProvider>
+    </UserProvider>
   );
 }
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"injera-gebeya-platform/Server/config"
 	"injera-gebeya-platform/Server/models"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -43,4 +44,20 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(fiber.Map{"message": "Registration successful"})
+}
+
+// Logout handles user logout
+func Logout(c *fiber.Ctx) error {
+	// Clear the authentication cookie
+	c.Cookie(&fiber.Cookie{
+		Name:     "token",
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour), // Set to past time to delete
+		HTTPOnly: true,
+		Secure:   false, // true in production
+		SameSite: "Lax",
+		Path:     "/",
+	})
+
+	return c.JSON(fiber.Map{"message": "Logout successful"})
 }

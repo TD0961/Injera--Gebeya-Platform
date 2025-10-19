@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import { useUser } from "../contexts/UserContext";
 import bgImg from "../assets/hero.jpg";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useUser();
 
   // ✅ handle input changes
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -25,6 +27,11 @@ export default function Login() {
       });
 
       toast.success("Login successful!", { position: "top-center" });
+
+      // Update user context with login data
+      if (res.data.user) {
+        login(res.data.user);
+      }
 
       const role = res.data.user?.role;
       setTimeout(() => {

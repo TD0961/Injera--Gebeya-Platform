@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"injera-gebeya-platform/Server/config"
 	"injera-gebeya-platform/Server/handlers"
 	"injera-gebeya-platform/Server/middleware"
@@ -11,6 +12,8 @@ import (
 )
 
 func main() {
+	fmt.Println("🚀 Starting Injera Gebeya Platform Server...")
+	
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
@@ -20,8 +23,12 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	fmt.Println("🔗 Connecting to database...")
 	config.ConnectDatabase()
-	config.DB.AutoMigrate(&models.User{}, &models.Product{})
+	
+	fmt.Println("📊 Running database migrations...")
+	config.DB.AutoMigrate(&models.User{}, &models.Product{}) // &models.Order{}, &models.OrderItem{} - commented out for now
+	fmt.Println("✅ Database migrations completed!")
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Server running!")
@@ -33,6 +40,7 @@ func main() {
 
 	app.Post("/api/register", handlers.Register)
 	app.Post("/api/login", handlers.Login)
+	app.Post("/api/logout", handlers.Logout)
 
 	// ✅ New route — no new file needed
 	app.Get("/api/me", middleware.RequireAuth, func(c *fiber.Ctx) error {
@@ -51,7 +59,30 @@ func main() {
 	app.Put("/seller/products/:id", middleware.RequireAuth, handlers.UpdateProduct)
 	app.Delete("/seller/products/:id", middleware.RequireAuth, handlers.DeleteProduct)
 
+	// Order routes (commented out for now)
+	// app.Post("/api/orders", middleware.RequireAuth, handlers.CreateOrder)
+	// app.Get("/api/orders", middleware.RequireAuth, handlers.GetUserOrders)
+	// app.Get("/api/orders/:id", middleware.RequireAuth, handlers.GetOrder)
+	// app.Put("/api/orders/:id/status", middleware.RequireAuth, handlers.UpdateOrderStatus)
+	// app.Get("/api/seller/orders", middleware.RequireAuth, handlers.GetSellerOrders)
+
+	// Payment routes (commented out for now)
+	// app.Post("/api/create-payment-intent", middleware.RequireAuth, handlers.CreateStripePaymentIntent)
+	// app.Post("/api/create-chapa-payment", middleware.RequireAuth, handlers.CreateChapaPayment)
+	// app.Post("/api/chapa/callback", handlers.ChapaCallback)
+
 	app.Get("/products", handlers.GetPublicProducts)
 
-	app.Listen(":3000")
+	fmt.Println("🌐 Server starting on port 3000...")
+	fmt.Println("📡 Available endpoints:")
+	fmt.Println("   GET  / - Server status")
+	fmt.Println("   GET  /health - Health check")
+	fmt.Println("   POST /api/register - User registration")
+	fmt.Println("   POST /api/login - User login")
+	fmt.Println("   GET  /products - Get products")
+	
+	err := app.Listen(":3000")
+	if err != nil {
+		fmt.Printf("❌ Server failed to start: %v\n", err)
+	}
 }
