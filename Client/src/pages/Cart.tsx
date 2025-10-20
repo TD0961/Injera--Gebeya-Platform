@@ -5,37 +5,41 @@ import { useCart } from "../contexts/CartContext";
 import bg from "../assets/hero.jpg";
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, getTotalPrice, resetCart } = useCart();
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
+  const { cart, updateQuantity, removeFromCart, getTotalPrice, resetCart, ensurePaymentDeadline, clearPaymentDeadline, getTimeLeftSeconds } = useCart();
+  const [timeLeft, setTimeLeft] = useState(0);
   const [isPaymentActive, setIsPaymentActive] = useState(false);
   const navigate = useNavigate();
 
-  // Payment timer effect
+  // Initialize timer when arriving with items; do not restart if deadline exists
   useEffect(() => {
-    if (cart.length > 0 && !isPaymentActive) {
+    if (cart.length > 0) {
+      ensurePaymentDeadline();
       setIsPaymentActive(true);
-      setTimeLeft(15 * 60);
+      setTimeLeft(getTimeLeftSeconds());
+    } else {
+      setIsPaymentActive(false);
+      setTimeLeft(0);
+      clearPaymentDeadline();
     }
-  }, [cart.length, isPaymentActive]);
+  }, [cart.length, ensurePaymentDeadline, getTimeLeftSeconds, clearPaymentDeadline]);
 
   useEffect(() => {
     if (!isPaymentActive) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          // Time's up - reset cart and redirect
-          setIsPaymentActive(false);
-          resetCart(); // Reset the cart when timer expires
-          navigate('/products');
-          return 0;
-        }
-        return prev - 1;
-      });
+      const left = getTimeLeftSeconds();
+      if (left <= 0) {
+        setIsPaymentActive(false);
+        clearPaymentDeadline();
+        resetCart();
+        navigate('/products');
+      } else {
+        setTimeLeft(left);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isPaymentActive, navigate, resetCart]);
+  }, [isPaymentActive, navigate, resetCart, getTimeLeftSeconds, clearPaymentDeadline]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -136,40 +140,40 @@ export default function CartPage() {
                       <h3 className="text-lg font-semibold text-green-800 mb-1">{item.product.name}</h3>
                       <p className="text-yellow-600 font-bold text-lg">${item.product.price.toFixed(2)}</p>
                       <p className="text-sm text-gray-500">Stock: {item.product.stock}</p>
-                    </div>
+                  </div>
 
                     {/* Quantity Controls - Mobile: Full width, Desktop: Compact */}
                     <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <button
+                    <button
                           onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
                           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
                           aria-label={`Decrease ${item.product.name}`}
                         >
                           <Minus size={16} />
-                        </button>
+                    </button>
 
                         <div className="px-3 py-2 bg-yellow-100 text-green-900 font-semibold rounded-full min-w-[2.5rem] text-center">
                           {item.quantity}
                         </div>
 
-                        <button
+                    <button
                           onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
                           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
                           aria-label={`Increase ${item.product.name}`}
                         >
                           <Plus size={16} />
-                        </button>
+                    </button>
                       </div>
 
                       {/* Remove Button - Mobile: Full width, Desktop: Compact */}
-                      <button
+                    <button
                         onClick={() => handleRemoveItem(item.product.id)}
                         className="w-full sm:w-auto px-4 py-2 text-sm text-red-500 hover:text-red-600 font-medium border border-red-200 hover:border-red-300 rounded-lg transition"
-                      >
+                    >
                         Remove Item
-                      </button>
+                    </button>
                     </div>
                   </div>
                 </div>
@@ -181,8 +185,8 @@ export default function CartPage() {
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Order Summary</h3>
                 <div className="text-xl sm:text-2xl font-bold text-yellow-600">${total.toFixed(2)}</div>
-              </div>
-              
+            </div>
+
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex justify-between text-sm sm:text-base text-gray-600">
                   <span>Subtotal ({cart.length} items)</span>
@@ -200,12 +204,12 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => alert("Payment flow not implemented")}
+            <button
+                onClick={() => navigate("/checkout")}
                 className="mt-4 sm:mt-6 w-full py-3 sm:py-4 bg-yellow-500 hover:bg-yellow-600 text-green-900 rounded-xl font-bold text-base sm:text-lg transition shadow-lg hover:shadow-xl"
-              >
-                Proceed to Payment
-              </button>
+            >
+                Proceed to Checkout
+            </button>
             </div>
           </>
         )}

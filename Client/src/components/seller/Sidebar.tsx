@@ -1,8 +1,8 @@
 import React from "react";
 
 interface Props {
-  activeTab: "products" | "add";
-  setActiveTab: React.Dispatch<React.SetStateAction<"products" | "add">>;
+  activeTab: "products" | "add" | "orders";
+  setActiveTab: React.Dispatch<React.SetStateAction<"products" | "add" | "orders">>;
 }
 
 export default function Sidebar({ activeTab, setActiveTab }: Props) {
@@ -28,10 +28,21 @@ export default function Sidebar({ activeTab, setActiveTab }: Props) {
             className={`text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ${
               activeTab === "add"
                 ? "bg-yellow-100 text-yellow-700 border-l-4 border-yellow-400"
-                : "text-gray-700 hover:bg-yellow-500"
+                : "text-gray-700 hover:bg-gray-50"
             }`}
           >
             Add Product
+          </button>
+
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ${
+              activeTab === "orders"
+                ? "bg-yellow-100 text-yellow-700 border-l-4 border-yellow-400"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Manage Orders
           </button>
         </nav>
 
@@ -45,9 +56,3 @@ export default function Sidebar({ activeTab, setActiveTab }: Props) {
     </aside>
   );
 }
-
-<div className="mt-auto p-4 border-t">
-  <button className="w-full py-2 px-3 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-all">
-    Logout
-  </button>
-</div>

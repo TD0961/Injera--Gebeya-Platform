@@ -22,47 +22,54 @@ export default function ProductListing() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [originalStock, setOriginalStock] = useState<Record<number, number>>({});
-  const { cart, addToCart, getTotalItems, getCartItemQuantity } = useCart();
+  const { cart, addToCart, getTotalItems, getCartItemQuantity, ensurePaymentDeadline } = useCart();
   const navigate = useNavigate();
 
   // 🧭 Fetch products
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/products")
-      .then((res) => {
-        const updatedProducts = res.data.map((p: Product) => ({
-          ...p,
-          stock: p.stock || 0,
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/products");
+        const updatedProducts: Product[] = res.data.map((p: any) => ({
+          id: p.id ?? p.ID,
+          name: p.name,
+          price: Number(p.price),
+          stock: Number(p.stock ?? 0),
+          shop: p.shop,
+          category: p.category,
+          image_url: p.image_url,
         }));
 
-        setProducts(updatedProducts);
-        setFilteredProducts(updatedProducts);
-        
-        // Store original stock values
+        // Apply immediate visual deduction based on current cart contents
         const stockMap: Record<number, number> = {};
-        updatedProducts.forEach((product: Product) => {
-          stockMap[product.id] = product.stock;
+        const adjusted = updatedProducts.map((prod) => {
+          const base = prod.stock;
+          stockMap[prod.id] = base;
+          const inCart = getCartItemQuantity(prod.id);
+          return { ...prod, stock: Math.max(0, base - inCart) };
         });
+
         setOriginalStock(stockMap);
-      })
-      .catch((err) => console.error("Error fetching products:", err));
-  }, []);
+        setProducts(adjusted);
+        setFilteredProducts(adjusted);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      }
+    };
+    fetchProducts();
+    // include getCartItemQuantity so first render reflects cart stock
+  }, [getCartItemQuantity]);
 
   // 🔄 Calculate available stock based on cart quantities
   useEffect(() => {
-    if (Object.keys(originalStock).length === 0) return; // Wait for original stock to be loaded
-    
-    setProducts((prev) =>
-      prev.map((product) => {
-        const cartQuantity = getCartItemQuantity(product.id);
-        const availableStock = Math.max(0, originalStock[product.id] - cartQuantity);
-        return {
-          ...product,
-          stock: availableStock,
-        };
-      })
-    );
-  }, [cart, originalStock, getCartItemQuantity]);
+    if (products.length === 0) return;
+    const next = products.map((product) => {
+      const inCart = getCartItemQuantity(product.id);
+      const base = originalStock[product.id] ?? product.stock + inCart; // reconstruct base if not set
+      return { ...product, stock: Math.max(0, base - inCart) };
+    });
+    setProducts(next);
+  }, [cart, products.length, getCartItemQuantity]);
 
   // 🔄 Reset stock to original when cart is empty (timer expiration)
   useEffect(() => {
@@ -88,6 +95,8 @@ export default function ProductListing() {
   const handleAddToCart = (product: Product) => {
     if (product.stock <= 0) return;
     addToCart(product);
+    // Start payment deadline once when first item is added in this session
+    ensurePaymentDeadline();
     // Stock will be updated automatically by the cart sync effect
   };
 

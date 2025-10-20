@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 
 interface Product {
@@ -24,6 +24,11 @@ interface CartContextType {
   getTotalPrice: () => number;
   getCartItemQuantity: (productId: number) => number;
   resetCart: () => void;
+  // Payment deadline utilities (persisted across navigation)
+  paymentDeadline: number | null;
+  ensurePaymentDeadline: (secondsFromNow?: number) => void;
+  clearPaymentDeadline: () => void;
+  getTimeLeftSeconds: () => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -46,10 +51,24 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Persisted payment deadline (epoch ms)
+  const [paymentDeadline, setPaymentDeadline] = useState<number | null>(() => {
+    const raw = localStorage.getItem('paymentDeadline');
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  });
+
   // Sync cart to localStorage
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
+
+  // Keep deadline persisted
+  useEffect(() => {
+    if (paymentDeadline) localStorage.setItem('paymentDeadline', String(paymentDeadline));
+    else localStorage.removeItem('paymentDeadline');
+  }, [paymentDeadline]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -84,9 +103,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     );
   };
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCart([]);
-  };
+  }, []);
 
   const getTotalItems = () => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -106,6 +125,30 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     localStorage.removeItem('cart');
   };
 
+  // Deadline helpers
+  const ensurePaymentDeadline = (secondsFromNow: number = 15 * 60) => {
+    if (!paymentDeadline) {
+      const deadline = Date.now() + secondsFromNow * 1000;
+      setPaymentDeadline(deadline);
+    }
+  };
+
+  const clearPaymentDeadline = () => {
+    setPaymentDeadline(null);
+  };
+
+  const getTimeLeftSeconds = () => {
+    if (!paymentDeadline) return 0;
+    return Math.max(0, Math.floor((paymentDeadline - Date.now()) / 1000));
+  };
+
+  // Auto clear deadline when cart empties
+  useEffect(() => {
+    if (cart.length === 0 && paymentDeadline) {
+      setPaymentDeadline(null);
+    }
+  }, [cart.length, paymentDeadline]);
+
   const value: CartContextType = {
     cart,
     addToCart,
@@ -116,6 +159,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     getTotalPrice,
     getCartItemQuantity,
     resetCart,
+    paymentDeadline,
+    ensurePaymentDeadline,
+    clearPaymentDeadline,
+    getTimeLeftSeconds,
   };
 
   return (

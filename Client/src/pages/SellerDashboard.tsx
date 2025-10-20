@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/seller/Sidebar";
 import ProductTable from "../components/seller/ProductTable";
 import ProductForm from "../components/seller/ProductForm";
@@ -14,7 +15,8 @@ import {
 } from "../api/Seller";
 
 export default function SellerDashboard() {
-  const [activeTab, setActiveTab] = useState<"products" | "add">("products");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"products" | "add" | "orders">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [sellerName, setSellerName] = useState("");
@@ -162,6 +164,25 @@ export default function SellerDashboard() {
                     Add New Product
                   </h2>
                   <ProductForm onSubmit={addProduct} />
+                </div>
+              )}
+
+              {activeTab === "orders" && (
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">
+                    Order Management
+                  </h2>
+                  <div className="bg-white rounded-lg shadow p-6 text-center">
+                    <p className="text-gray-600 mb-4">
+                      Manage your incoming orders and track their status
+                    </p>
+                    <button
+                      onClick={() => navigate('/seller/orders')}
+                      className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition"
+                    >
+                      Go to Order Management
+                    </button>
+                  </div>
                 </div>
               )}
             </section>

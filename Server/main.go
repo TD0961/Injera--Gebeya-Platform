@@ -13,7 +13,7 @@ import (
 
 func main() {
 	fmt.Println("🚀 Starting Injera Gebeya Platform Server...")
-	
+
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
@@ -25,9 +25,9 @@ func main() {
 
 	fmt.Println("🔗 Connecting to database...")
 	config.ConnectDatabase()
-	
+
 	fmt.Println("📊 Running database migrations...")
-	config.DB.AutoMigrate(&models.User{}, &models.Product{}) // &models.Order{}, &models.OrderItem{} - commented out for now
+	config.DB.AutoMigrate(&models.User{}, &models.Product{}, &models.Order{}, &models.OrderItem{})
 	fmt.Println("✅ Database migrations completed!")
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -59,17 +59,33 @@ func main() {
 	app.Put("/seller/products/:id", middleware.RequireAuth, handlers.UpdateProduct)
 	app.Delete("/seller/products/:id", middleware.RequireAuth, handlers.DeleteProduct)
 
-	// Order routes (commented out for now)
-	// app.Post("/api/orders", middleware.RequireAuth, handlers.CreateOrder)
-	// app.Get("/api/orders", middleware.RequireAuth, handlers.GetUserOrders)
-	// app.Get("/api/orders/:id", middleware.RequireAuth, handlers.GetOrder)
-	// app.Put("/api/orders/:id/status", middleware.RequireAuth, handlers.UpdateOrderStatus)
-	// app.Get("/api/seller/orders", middleware.RequireAuth, handlers.GetSellerOrders)
+	// Order routes
+	app.Post("/api/orders", middleware.RequireAuth, handlers.CreateOrder)
+	app.Get("/api/orders", middleware.RequireAuth, handlers.GetUserOrders)
+	// Place the more specific tx_ref route BEFORE the :id route to avoid conflicts
+	app.Get("/api/orders/tx/:tx_ref", middleware.RequireAuth, handlers.GetOrderByTxRef)
+	app.Get("/api/orders/:id", middleware.RequireAuth, handlers.GetOrder)
+	app.Put("/api/orders/:id/status", middleware.RequireAuth, handlers.UpdateOrderStatus)
+	app.Get("/api/seller/orders", middleware.RequireAuth, handlers.GetSellerOrders)
 
-	// Payment routes (commented out for now)
-	// app.Post("/api/create-payment-intent", middleware.RequireAuth, handlers.CreateStripePaymentIntent)
-	// app.Post("/api/create-chapa-payment", middleware.RequireAuth, handlers.CreateChapaPayment)
-	// app.Post("/api/chapa/callback", handlers.ChapaCallback)
+	// Payment routes
+	app.Post("/api/create-payment-intent", middleware.RequireAuth, handlers.CreateStripePaymentIntent)
+	app.Post("/api/stripe/webhook", handlers.StripeWebhook)
+	app.Post("/api/store-pending-order", middleware.RequireAuth, handlers.StorePendingOrder)
+	app.Post("/api/create-chapa-payment", middleware.RequireAuth, handlers.CreateChapaPayment)
+	app.Post("/api/chapa/callback", handlers.ChapaCallback)
+	// Allow browser redirect callbacks as GET too (Chapa redirects users via GET)
+	app.Get("/api/chapa/callback", handlers.ChapaCallback)
+	app.Get("/api/chapa/verify/:tx_ref", handlers.VerifyChapaPayment)
+
+	// Test endpoint for debugging Chapa API
+	app.Get("/api/test-chapa", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"message":   "Chapa test endpoint",
+			"chapa_url": "https://api.chapa.co/v1/transaction/initialize",
+			"test_key":  "CHASECK_TEST-fnGvtP8fBikY8JetWMgLZX3f3aJ6n7Vi",
+		})
+	})
 
 	app.Get("/products", handlers.GetPublicProducts)
 
@@ -80,7 +96,17 @@ func main() {
 	fmt.Println("   POST /api/register - User registration")
 	fmt.Println("   POST /api/login - User login")
 	fmt.Println("   GET  /products - Get products")
-	
+	fmt.Println("   POST /api/orders - Create order")
+	fmt.Println("   GET  /api/orders - Get user orders")
+	fmt.Println("   GET  /api/orders/:id - Get specific order")
+	fmt.Println("   PUT  /api/orders/:id/status - Update order status")
+	fmt.Println("   GET  /api/seller/orders - Get seller orders")
+	fmt.Println("   POST /api/create-payment-intent - Create Stripe payment intent (TEST MODE)")
+	fmt.Println("   POST /api/stripe/webhook - Stripe webhook handler")
+	fmt.Println("   POST /api/create-chapa-payment - Create Chapa payment (TEST MODE)")
+	fmt.Println("   POST /api/chapa/callback - Chapa payment callback")
+	fmt.Println("   GET  /api/chapa/verify/:tx_ref - Verify Chapa payment")
+
 	err := app.Listen(":3000")
 	if err != nil {
 		fmt.Printf("❌ Server failed to start: %v\n", err)

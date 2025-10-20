@@ -9,6 +9,10 @@ import SellerSignup from './pages/SellerSignup';
 import SellerDashboard from './pages/SellerDashboard';
 import ProductListing from './pages/ProductListing';
 import CartPage from './pages/Cart';
+import Checkout from './pages/Checkout';
+import PaymentSuccess from './pages/PaymentSuccess';
+import SellerOrders from './pages/SellerOrders';
+import OrderHistory from './pages/OrderHistory';
 
 function App() {
   return (
@@ -23,7 +27,11 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/seller/dashboard" element={<SellerDashboard />} />
             <Route path="/products" element={<ProductListing />} /> 
-            <Route path="/cart" element={<CartPage />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/payment-success" element={<PaymentSuccess />} />
+                    <Route path="/orders" element={<OrderHistory />} />
+                    <Route path="/seller/orders" element={<SellerOrders />} />
           </Routes>
         </Router>
       </CartProvider>
