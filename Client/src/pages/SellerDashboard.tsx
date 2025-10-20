@@ -7,6 +7,7 @@ import type { Product } from "../components/seller/ProductTable";
 import bgImg from "../assets/hero.jpg";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { useUser } from "../contexts/UserContext";
 import {
   getMyProducts,
   createProduct,
@@ -16,10 +17,16 @@ import {
 
 export default function SellerDashboard() {
   const navigate = useNavigate();
+  const { logout } = useUser();
   const [activeTab, setActiveTab] = useState<"products" | "add" | "orders">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [sellerName, setSellerName] = useState("");
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -129,13 +136,23 @@ export default function SellerDashboard() {
 
           <div className="flex-1 p-8">
             <header className="mb-6">
-              <h1 className="text-2xl font-semibold text-green-700">
-                Seller Dashboard
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Welcome back, <span className="text-yellow-400 font-semibold">{sellerName || "Seller"}</span>!
-              </p>
-
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-2xl font-semibold text-green-700">
+                    Seller Dashboard
+                  </h1>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Welcome back, <span className="text-yellow-400 font-semibold">{sellerName || "Seller"}</span>!
+                  </p>
+                </div>
+                {/* Mobile logout button */}
+                <button
+                  onClick={handleLogout}
+                  className="md:hidden px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-all"
+                >
+                  Logout
+                </button>
+              </div>
             </header>
 
             <section className="space-y-8">

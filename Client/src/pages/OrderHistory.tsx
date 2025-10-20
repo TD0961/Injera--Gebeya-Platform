@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle, Eye, RefreshCw, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle, Eye, RefreshCw, MapPin, Phone, RotateCcw } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import bg from '../assets/hero.jpg';
 
@@ -20,7 +20,7 @@ interface OrderItem {
 interface Order {
   id: number;
   order_number: string;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
   payment_method: string;
   shipping_address: string;
@@ -45,13 +45,7 @@ const statusConfig = {
     color: 'bg-blue-100 text-blue-800', 
     icon: CheckCircle, 
     label: 'Confirmed',
-    description: 'Your order has been confirmed'
-  },
-  processing: { 
-    color: 'bg-purple-100 text-purple-800', 
-    icon: RefreshCw, 
-    label: 'Processing',
-    description: 'Your order is being prepared'
+    description: 'Your order has been confirmed and is being prepared'
   },
   shipped: { 
     color: 'bg-indigo-100 text-indigo-800', 
@@ -94,6 +88,10 @@ export default function OrderHistory() {
       return;
     }
     fetchOrders();
+    
+    // Auto-refresh every 30 seconds to keep orders in sync
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
   }, [user, navigate]);
 
   const fetchOrders = async () => {
@@ -109,8 +107,10 @@ export default function OrderHistory() {
 
       const data = await response.json();
       setOrders(data.orders);
+      console.log(`📦 Loaded ${data.orders.length} orders for buyer`);
     } catch (err: any) {
       setError(err.message);
+      console.error('❌ Failed to fetch orders:', err.message);
     } finally {
       setLoading(false);
     }
@@ -127,9 +127,20 @@ export default function OrderHistory() {
   };
 
   const getStatusProgress = (status: string) => {
-    const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered'];
     const currentIndex = statusOrder.indexOf(status);
     return currentIndex >= 0 ? currentIndex + 1 : 0;
+  };
+
+  const getStatusDescription = (status: string) => {
+    const descriptions = {
+      pending: 'Order received, awaiting seller confirmation',
+      confirmed: 'Order confirmed by seller and being prepared',
+      shipped: 'Order shipped and on the way to you',
+      delivered: 'Order successfully delivered to you',
+      cancelled: 'Order has been cancelled',
+    };
+    return descriptions[status as keyof typeof descriptions] || 'Unknown status';
   };
 
   if (loading) {
@@ -163,6 +174,14 @@ export default function OrderHistory() {
             <h1 className="text-xl sm:text-2xl font-bold text-yellow-400">Order History</h1>
             <p className="text-sm text-green-100">Track your orders and deliveries</p>
           </div>
+          <button
+            onClick={fetchOrders}
+            disabled={loading}
+            className="p-2 hover:bg-green-700 rounded-full transition disabled:opacity-50"
+            title="Refresh orders"
+          >
+            <RotateCcw className={`text-yellow-400 ${loading ? 'animate-spin' : ''}`} size={20} />
+          </button>
         </div>
       </div>
 
@@ -221,16 +240,16 @@ export default function OrderHistory() {
                       <div className="mt-4">
                         <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
                           <span>Order Progress</span>
-                          <span>{progress}/5</span>
+                          <span>{progress}/4</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div 
                             className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(progress / 5) * 100}%` }}
+                            style={{ width: `${(progress / 4) * 100}%` }}
                           ></div>
                         </div>
                         <p className="text-xs text-gray-600 mt-1">
-                          {statusConfig[order.status].description}
+                          {getStatusDescription(order.status)}
                         </p>
                       </div>
                     </div>

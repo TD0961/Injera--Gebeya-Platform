@@ -8,9 +8,8 @@ import {
 } from '@stripe/react-stripe-js';
 import { useUser } from '../contexts/UserContext';
 
-// Initialize Stripe with test publishable key
-// Using your actual Stripe test publishable key
-const stripePromise = loadStripe('pk_test_51SJwwuPN0oE3JBMznkcKGBWqclgClERJgMfOy2pPPD3Y5Bx2nYtRQgN7VRanMTnqTp0VYLhK5oDb7eY0OYPCdjB800wxfLFeAJ');
+// Initialize Stripe with publishable key from environment
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51SJwwuPN0oE3JBMznkcKGBWqclgClERJgMfOy2pPPD3Y5Bx2nYtRQgN7VRanMTnqTp0VYLhK5oDb7eY0OYPCdjB800wxfLFeAJ');
 
 interface StripePaymentProps {
   amount: number;

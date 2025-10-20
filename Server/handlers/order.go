@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"time"
 
 	"injera-gebeya-platform/Server/config"
 	"injera-gebeya-platform/Server/models"
@@ -239,12 +240,16 @@ func UpdateOrderStatus(c *fiber.Ctx) error {
 		})
 	}
 
+	// SECURITY: Validate that the seller owns products in this order
 	var order models.Order
 	if err := config.DB.Preload("OrderItems.Product").
-		Where("id = ?", orderID).
+		Joins("JOIN order_items ON orders.id = order_items.order_id").
+		Joins("JOIN products ON order_items.product_id = products.id").
+		Where("orders.id = ? AND products.seller_id = ?", orderID, user.ID).
+		Group("orders.id").
 		First(&order).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"error": "Order not found",
+			"error": "Order not found or you don't have permission to update this order",
 		})
 	}
 
@@ -252,23 +257,41 @@ func UpdateOrderStatus(c *fiber.Ctx) error {
 	newStatus := models.OrderStatus(req.Status)
 	if !isValidStatusTransition(order.Status, newStatus) {
 		return c.Status(400).JSON(fiber.Map{
-			"error": fmt.Sprintf("Invalid status transition from %s to %s", order.Status, newStatus),
+			"error": fmt.Sprintf("Invalid status transition from %s to %s", order.Status, req.Status),
 		})
 	}
 
 	// Update order status
-	order.Status = newStatus
-	if err := config.DB.Save(&order).Error; err != nil {
+	result := config.DB.Model(&order).Where("id = ?", order.ID).
+		Updates(map[string]interface{}{
+			"status":     newStatus,
+			"updated_at": time.Now(),
+		})
+
+	if result.Error != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to update order status",
 		})
 	}
 
-	fmt.Printf("📦 Order %s status updated to %s by seller %s\n", order.OrderNumber, newStatus, user.Email)
+	if result.RowsAffected == 0 {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "Order not found",
+		})
+	}
 
+	// SECURITY: Log without sensitive data
+	fmt.Printf("📦 Order %s status updated to %s by seller ID %d\n", order.OrderNumber, newStatus, user.ID)
+
+	// Return minimal order data (no sensitive information)
 	return c.JSON(fiber.Map{
 		"message": "Order status updated successfully",
-		"order":   order,
+		"order": fiber.Map{
+			"id":           order.ID,
+			"order_number": order.OrderNumber,
+			"status":       order.Status,
+			"updated_at":   order.UpdatedAt,
+		},
 	})
 }
 
@@ -305,12 +328,11 @@ func GetSellerOrders(c *fiber.Ctx) error {
 // isValidStatusTransition checks if a status transition is valid
 func isValidStatusTransition(current, new models.OrderStatus) bool {
 	validTransitions := map[models.OrderStatus][]models.OrderStatus{
-		models.OrderStatusPending:    {models.OrderStatusConfirmed, models.OrderStatusCancelled},
-		models.OrderStatusConfirmed:  {models.OrderStatusProcessing, models.OrderStatusCancelled},
-		models.OrderStatusProcessing: {models.OrderStatusShipped, models.OrderStatusCancelled},
-		models.OrderStatusShipped:    {models.OrderStatusDelivered},
-		models.OrderStatusDelivered:  {}, // Final state
-		models.OrderStatusCancelled:  {}, // Final state
+		models.OrderStatusPending:   {models.OrderStatusConfirmed, models.OrderStatusCancelled},
+		models.OrderStatusConfirmed: {models.OrderStatusShipped, models.OrderStatusCancelled},
+		models.OrderStatusShipped:   {models.OrderStatusDelivered},
+		models.OrderStatusDelivered: {}, // Final state
+		models.OrderStatusCancelled: {}, // Final state
 	}
 
 	allowed, exists := validTransitions[current]

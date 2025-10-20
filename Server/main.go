@@ -6,20 +6,34 @@ import (
 	"injera-gebeya-platform/Server/handlers"
 	"injera-gebeya-platform/Server/middleware"
 	"injera-gebeya-platform/Server/models"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	fmt.Println("🚀 Starting Injera Gebeya Platform Server...")
 
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️  No .env file found, using system environment variables")
+	}
+
 	app := fiber.New()
 
+	// Security middleware
+	app.Use(middleware.HelmetMiddleware())
+	app.Use(middleware.RequestIDMiddleware())
+	app.Use(middleware.SecurityMiddleware())
+	app.Use(middleware.SanitizeInput)
+
+	// CORS configuration
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5174",
+		AllowOrigins:     "http://localhost:5174,http://localhost:5175",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:     "Origin, Content-Type, Accept",
+		AllowHeaders:     "Origin, Content-Type, Accept, X-Request-ID",
 		AllowCredentials: true,
 	}))
 
@@ -59,14 +73,14 @@ func main() {
 	app.Put("/seller/products/:id", middleware.RequireAuth, handlers.UpdateProduct)
 	app.Delete("/seller/products/:id", middleware.RequireAuth, handlers.DeleteProduct)
 
-	// Order routes
-	app.Post("/api/orders", middleware.RequireAuth, handlers.CreateOrder)
-	app.Get("/api/orders", middleware.RequireAuth, handlers.GetUserOrders)
+	// Order routes with rate limiting and validation
+	app.Post("/api/orders", middleware.RequireAuth, middleware.OrderRateLimiter(), middleware.ValidateOrderInput, handlers.CreateOrder)
+	app.Get("/api/orders", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetUserOrders)
 	// Place the more specific tx_ref route BEFORE the :id route to avoid conflicts
-	app.Get("/api/orders/tx/:tx_ref", middleware.RequireAuth, handlers.GetOrderByTxRef)
-	app.Get("/api/orders/:id", middleware.RequireAuth, handlers.GetOrder)
-	app.Put("/api/orders/:id/status", middleware.RequireAuth, handlers.UpdateOrderStatus)
-	app.Get("/api/seller/orders", middleware.RequireAuth, handlers.GetSellerOrders)
+	app.Get("/api/orders/tx/:tx_ref", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetOrderByTxRef)
+	app.Get("/api/orders/:id", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetOrder)
+	app.Put("/api/orders/:id/status", middleware.RequireAuth, middleware.OrderRateLimiter(), middleware.ValidateStatusUpdate, handlers.UpdateOrderStatus)
+	app.Get("/api/seller/orders", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetSellerOrders)
 
 	// Payment routes
 	app.Post("/api/create-payment-intent", middleware.RequireAuth, handlers.CreateStripePaymentIntent)

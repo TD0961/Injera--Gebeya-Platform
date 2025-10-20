@@ -10,12 +10,11 @@ import (
 type OrderStatus string
 
 const (
-	OrderStatusPending    OrderStatus = "pending"
-	OrderStatusConfirmed  OrderStatus = "confirmed"
-	OrderStatusProcessing OrderStatus = "processing"
-	OrderStatusShipped    OrderStatus = "shipped"
-	OrderStatusDelivered  OrderStatus = "delivered"
-	OrderStatusCancelled  OrderStatus = "cancelled"
+	OrderStatusPending   OrderStatus = "pending"
+	OrderStatusConfirmed OrderStatus = "confirmed"
+	OrderStatusShipped   OrderStatus = "shipped"
+	OrderStatusDelivered OrderStatus = "delivered"
+	OrderStatusCancelled OrderStatus = "cancelled"
 )
 
 // PaymentStatus represents the payment status
@@ -111,7 +110,7 @@ func (o *Order) CanBeCancelled() bool {
 
 // CanBeShipped returns true if the order can be shipped
 func (o *Order) CanBeShipped() bool {
-	return o.Status == OrderStatusConfirmed || o.Status == OrderStatusProcessing
+	return o.Status == OrderStatusConfirmed
 }
 
 // CanBeDelivered returns true if the order can be marked as delivered

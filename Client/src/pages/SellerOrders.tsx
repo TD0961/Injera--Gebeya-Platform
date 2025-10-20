@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle, Eye, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, XCircle, Eye, RefreshCw, RotateCcw } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
 import bg from '../assets/hero.jpg';
 
@@ -20,7 +20,7 @@ interface OrderItem {
 interface Order {
   id: number;
   order_number: string;
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
   payment_method: string;
   shipping_address: string;
@@ -42,7 +42,6 @@ interface Order {
 const statusConfig = {
   pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' },
   confirmed: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle, label: 'Confirmed' },
-  processing: { color: 'bg-purple-100 text-purple-800', icon: RefreshCw, label: 'Processing' },
   shipped: { color: 'bg-indigo-100 text-indigo-800', icon: Truck, label: 'Shipped' },
   delivered: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Delivered' },
   cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Cancelled' },
@@ -56,7 +55,7 @@ const paymentStatusConfig = {
 };
 
 export default function SellerOrders() {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,12 +63,21 @@ export default function SellerOrders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   useEffect(() => {
     if (user?.role !== 'seller') {
       navigate('/');
       return;
     }
     fetchOrders();
+    
+    // Auto-refresh every 30 seconds to keep orders in sync
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
   }, [user, navigate]);
 
   const fetchOrders = async () => {
@@ -105,7 +113,14 @@ export default function SellerOrders() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update order status');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update order status');
+      }
+
+      // Show success notification
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        console.log(`✅ Order #${order.order_number} status updated to ${newStatus}`);
       }
 
       // Refresh orders
@@ -113,6 +128,7 @@ export default function SellerOrders() {
       setSelectedOrder(null);
     } catch (err: any) {
       setError(err.message);
+      console.error('❌ Failed to update order status:', err.message);
     } finally {
       setUpdatingStatus(null);
     }
@@ -121,13 +137,23 @@ export default function SellerOrders() {
   const getStatusOptions = (currentStatus: string) => {
     const statusFlow = {
       pending: ['confirmed', 'cancelled'],
-      confirmed: ['processing', 'cancelled'],
-      processing: ['shipped', 'cancelled'],
+      confirmed: ['shipped', 'cancelled'],
       shipped: ['delivered'],
       delivered: [],
       cancelled: [],
     };
     return statusFlow[currentStatus as keyof typeof statusFlow] || [];
+  };
+
+  const getStatusDescription = (status: string) => {
+    const descriptions = {
+      pending: 'Order received, awaiting confirmation',
+      confirmed: 'Order confirmed and being prepared',
+      shipped: 'Order shipped and on the way',
+      delivered: 'Order successfully delivered',
+      cancelled: 'Order has been cancelled',
+    };
+    return descriptions[status as keyof typeof descriptions] || 'Unknown status';
   };
 
   const formatDate = (dateString: string) => {
@@ -170,6 +196,23 @@ export default function SellerOrders() {
           <div className="flex-1 text-center">
             <h1 className="text-xl sm:text-2xl font-bold text-yellow-400">Order Management</h1>
             <p className="text-sm text-green-100">Manage your incoming orders</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchOrders}
+              disabled={loading}
+              className="p-2 hover:bg-green-700 rounded-full transition disabled:opacity-50"
+              title="Refresh orders"
+            >
+              <RotateCcw className={`text-yellow-400 ${loading ? 'animate-spin' : ''}`} size={20} />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all"
+              title="Logout"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
@@ -215,6 +258,7 @@ export default function SellerOrders() {
                         <p><strong>Date:</strong> {formatDate(order.created_at)}</p>
                         <p><strong>Total:</strong> ${order.total.toFixed(2)}</p>
                         <p><strong>Items:</strong> {order.order_items.length} product(s)</p>
+                        <p className="text-xs text-gray-500 italic">{getStatusDescription(order.status)}</p>
                       </div>
                     </div>
 

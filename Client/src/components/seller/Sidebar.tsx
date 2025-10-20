@@ -1,4 +1,6 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useUser } from "../../contexts/UserContext";
 
 interface Props {
   activeTab: "products" | "add" | "orders";
@@ -6,6 +8,14 @@ interface Props {
 }
 
 export default function Sidebar({ activeTab, setActiveTab }: Props) {
+  const navigate = useNavigate();
+  const { logout } = useUser();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <aside className="w-full md:w-72 bg-white border-r hidden md:block">
       <div className="p-8">
@@ -47,7 +57,10 @@ export default function Sidebar({ activeTab, setActiveTab }: Props) {
         </nav>
 
         <div className="mt-auto p-4 border-t">
-            <button className="w-full py-2 px-3 bg-yellow-400 text-bold font-medium rounded-lg hover:bg-yellow-500 transition-all">
+            <button 
+              onClick={handleLogout}
+              className="w-full py-2 px-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-all"
+            >
                 Logout
             </button>
         </div>

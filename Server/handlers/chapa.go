@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -149,7 +150,10 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 	}
 
 	// Use real Chapa API with test key (for testing, but real API structure)
-	chapaSecretKey := "CHASECK_TEST-fnGvtP8fBikY8JetWMgLZX3f3aJ6n7Vi"
+	chapaSecretKey := os.Getenv("CHAPA_SECRET_KEY")
+	if chapaSecretKey == "" {
+		return c.Status(500).JSON(fiber.Map{"error": "Chapa secret key not configured"})
+	}
 	chapaURL := "https://api.chapa.co/v1/transaction/initialize"
 
 	fmt.Printf("🚀 Creating REAL Chapa payment for %s %s (%s)\n", req.FirstName, req.LastName, req.Email)
