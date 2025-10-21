@@ -41,7 +41,7 @@ func main() {
 	config.ConnectDatabase()
 
 	fmt.Println("📊 Running database migrations...")
-	config.DB.AutoMigrate(&models.User{}, &models.Product{}, &models.Order{}, &models.OrderItem{})
+	config.DB.AutoMigrate(&models.User{}, &models.Product{}, &models.Order{}, &models.OrderItem{}, &models.PendingRegistration{})
 	fmt.Println("✅ Database migrations completed!")
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -52,9 +52,16 @@ func main() {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
+	// Authentication routes
 	app.Post("/api/register", handlers.Register)
 	app.Post("/api/login", handlers.Login)
 	app.Post("/api/logout", handlers.Logout)
+
+	// Email verification routes
+	app.Post("/api/verify-email", handlers.VerifyEmail)
+	app.Post("/api/resend-verification", handlers.ResendVerificationEmail)
+	app.Get("/api/verification-status", middleware.RequireAuth, handlers.CheckVerificationStatus)
+	app.Get("/api/verification-info", handlers.GetVerificationInfo)
 
 	// ✅ New route — no new file needed
 	app.Get("/api/me", middleware.RequireAuth, func(c *fiber.Ctx) error {

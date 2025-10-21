@@ -43,8 +43,18 @@ export default function Login() {
       }, 1000);
 
     } catch (err: any) {
-      const message =
-        err.response?.data?.error || err.message || "Login failed!";
+      const message = err.response?.data?.error || err.message || "Login failed!";
+      
+      // Check if email verification is required
+      if (err.response?.data?.requiresVerification) {
+        const email = err.response?.data?.email;
+        if (email) {
+          localStorage.setItem('pendingVerificationEmail', email);
+          navigate('/verify-email');
+          return;
+        }
+      }
+      
       toast.error(message, { position: "top-center" });
     } finally {
       setLoading(false);

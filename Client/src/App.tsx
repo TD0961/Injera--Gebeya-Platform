@@ -13,6 +13,7 @@ import Checkout from './pages/Checkout';
 import PaymentSuccess from './pages/PaymentSuccess';
 import SellerOrders from './pages/SellerOrders';
 import OrderHistory from './pages/OrderHistory';
+import EmailVerification from './pages/EmailVerification';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/buyer-signup" element={<BuyerSignup />} />
             <Route path="/seller-signup" element={<SellerSignup />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/seller/dashboard" element={<SellerDashboard />} />
             <Route path="/products" element={<ProductListing />} /> 

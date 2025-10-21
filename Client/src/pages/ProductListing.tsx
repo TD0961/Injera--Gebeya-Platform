@@ -309,15 +309,15 @@ export default function ProductListing() {
               >
                 {/* Product Image */}
                 <div className="relative overflow-hidden">
-                  <img
-                    src={
-                      product.image_url
-                        ? product.image_url.startsWith("http")
-                          ? product.image_url
-                          : `http://localhost:3000/${product.image_url}`
-                        : "https://via.placeholder.com/300x200?text=No+Image"
-                    }
-                    alt={product.name}
+                <img
+                  src={
+                    product.image_url
+                      ? product.image_url.startsWith("http")
+                        ? product.image_url
+                        : `http://localhost:3000/${product.image_url}`
+                      : "https://via.placeholder.com/300x200?text=No+Image"
+                  }
+                  alt={product.name}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   
@@ -359,7 +359,7 @@ export default function ProductListing() {
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{product.name}</h3>
-                    {product.shop && (
+                  {product.shop && (
                       <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                         {product.shop}
                       </span>

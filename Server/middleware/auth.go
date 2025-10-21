@@ -47,6 +47,22 @@ func RequireAuth(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "User not found"})
 	}
 
+	// Check if email is verified for protected operations
+	// Allow access to verification endpoints without email verification
+	path := c.Path()
+	isVerificationEndpoint := path == "/api/verify-email" ||
+		path == "/api/resend-verification" ||
+		path == "/api/verification-info" ||
+		path == "/api/verification-status"
+
+	if !user.EmailVerified && !isVerificationEndpoint {
+		return c.Status(403).JSON(fiber.Map{
+			"error":                "Please verify your email before accessing this resource",
+			"email":                user.Email,
+			"requiresVerification": true,
+		})
+	}
+
 	c.Locals("user_id", uint(userIDFloat))
 	c.Locals("role", user.Role)
 	c.Locals("user", user) // ✅ Attach full user object

@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "VITE_FORCE_POLLING=true CHOKIDAR_USEPOLLING=true WATCHPACK_POLLING=true vite",
+    "dev:normal": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

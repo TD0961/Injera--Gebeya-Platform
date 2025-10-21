@@ -33,10 +33,26 @@ export default function SellerSignup() {
 
     try {
       // ✅ Use relative URL for Vite proxy
-      await axios.post('/api/register', {
+      const response = await axios.post('/api/register', {
         ...form,
         role: 'seller',
       });
+
+      // Check if email verification is required
+      if (response.data.requiresVerification) {
+        // Store email for verification page
+        localStorage.setItem('pendingVerificationEmail', form.email);
+        
+        setSuccess(true);
+        toast.success('Registration successful! Please check your email to verify your account.', { 
+          position: 'top-center',
+          duration: 5000
+        });
+
+        // Redirect to email verification page
+        navigate('/verify-email');
+        return;
+      }
 
       setSuccess(true);
       toast.success('Registration successful! Redirecting to login...', { position: 'top-center' });

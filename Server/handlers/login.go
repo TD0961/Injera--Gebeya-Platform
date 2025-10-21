@@ -32,6 +32,15 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
 	}
 
+	// Check if email is verified
+	if !user.EmailVerified {
+		return c.Status(403).JSON(fiber.Map{
+			"error":                "Please verify your email before logging in",
+			"email":                user.Email,
+			"requiresVerification": true,
+		})
+	}
+
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
 		secret = "supersecret"

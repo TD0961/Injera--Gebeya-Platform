@@ -3,6 +3,8 @@ package handlers
 import (
 	"injera-gebeya-platform/Server/config"
 	"injera-gebeya-platform/Server/models"
+	"injera-gebeya-platform/Server/services"
+	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,20 +32,87 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Could not hash password"})
 	}
 
-	user := models.User{
-		Name:     input.Name,
-		Email:    input.Email,
-		Password: string(hashed),
-		Address:  input.Address,
-		Role:     input.Role,
-		ShopName: input.ShopName,
+	// Generate verification code
+	emailService := services.NewEmailService()
+	code, err := emailService.GenerateVerificationCode()
+	if err != nil {
+		log.Printf("Error generating verification code: %v", err)
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate verification code"})
 	}
 
-	if err := config.DB.Create(&user).Error; err != nil {
+	// Set token expiry (24 hours)
+	expiry := time.Now().Add(24 * time.Hour)
+
+	// Check if user already exists
+	var existingUser models.User
+	if err := config.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Email already exists"})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"message": "Registration successful"})
+	// Check if pending registration already exists
+	var existingPending models.PendingRegistration
+	if err := config.DB.Where("email = ?", input.Email).First(&existingPending).Error; err == nil {
+		// Update existing pending registration
+		existingPending.Name = input.Name
+		existingPending.Password = string(hashed)
+		existingPending.Address = input.Address
+		existingPending.Role = input.Role
+		existingPending.ShopName = input.ShopName
+		existingPending.VerificationToken = code
+		existingPending.VerificationExpiry = &expiry
+
+		if err := config.DB.Save(&existingPending).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to update pending registration"})
+		}
+	} else {
+		// Create new pending registration
+		pendingReg := models.PendingRegistration{
+			Name:               input.Name,
+			Email:              input.Email,
+			Password:           string(hashed),
+			Address:            input.Address,
+			Role:               input.Role,
+			ShopName:           input.ShopName,
+			VerificationToken:  code,
+			VerificationExpiry: &expiry,
+		}
+
+		if err := config.DB.Create(&pendingReg).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to create pending registration"})
+		}
+	}
+
+	// Send verification email
+	emailSent := false
+	if emailService.IsEmailConfigured() {
+		go func() {
+			if err := emailService.SendVerificationEmail(input.Email, input.Name, code); err != nil {
+				log.Printf("Failed to send verification email: %v", err)
+			} else {
+				log.Printf("📧 Verification email sent to: %s", input.Email)
+			}
+		}()
+		emailSent = true
+	} else {
+		log.Printf("⚠️ Email service not configured. Verification code for %s: %s", input.Email, code)
+	}
+
+	log.Printf("📧 Pending registration created: %s (%s)", input.Name, input.Email)
+
+	response := fiber.Map{
+		"message":              "Registration successful! Please verify your account.",
+		"email":                input.Email,
+		"requiresVerification": true,
+	}
+
+	// Include verification token in development mode when email is not configured
+	if !emailSent {
+		response["verificationCode"] = code
+		response["verificationURL"] = "http://localhost:5174/verify-email"
+		response["message"] = "Registration successful! Email service not configured. Use the verification URL below."
+	}
+
+	return c.Status(201).JSON(response)
 }
 
 // Logout handles user logout
