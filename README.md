@@ -1,163 +1,191 @@
-# React + Vite
+# eGebeya Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Ethiopian Food Marketplace - Connecting Authentic Flavors with Modern Technology**
 
-Currently, two official plugins are available:
+## 🍽️ Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+eGebeya is a full-stack e-commerce platform specializing in Ethiopian cuisine, particularly Injera and traditional dishes. The platform connects local food vendors with customers, providing a seamless ordering experience with secure payment processing and real-time order management.
 
-## Expanding the ESLint configuration
+## ✨ Key Features
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### For Customers
+- **Browse Products**: Discover authentic Ethiopian dishes from local vendors
+- **Smart Shopping Cart**: Persistent cart with real-time stock updates
+- **Secure Payments**: Multiple payment options (Chapa, Stripe)
+- **Order Tracking**: Real-time order status updates
+- **Email Verification**: Secure account creation with 6-digit verification codes
 
-# Injera Gebeya
+### For Sellers
+- **Vendor Dashboard**: Complete inventory and order management
+- **Product Management**: Add, edit, and track product listings
+- **Order Processing**: Manage orders with status transitions
+- **Analytics**: Track sales and customer interactions
 
-**Connecting You with the Heart of Ethiopian Flavor**
+## 🛠️ Tech Stack
 
-## Overview
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for responsive design
+- **React Router** for navigation
+- **Context API** for state management
 
-Injera Gebeya is an online marketplace designed to connect local Injera sellers with customers seeking authentic, freshly made Injera. This platform allows sellers to register, showcase their Injera products (including variations, pricing, payment methods, and delivery options), and manage their orders. Customers can browse local sellers, view their offerings, place orders for pickup or delivery, and support their community's culinary heritage.
+### Backend
+- **Go** with Fiber framework
+- **PostgreSQL** database with GORM ORM
+- **JWT** authentication
+- **Docker** for containerization
 
-## Key Features
+### Payment Integration
+- **Chapa** (Ethiopian payment gateway)
+- **Stripe** (International payments)
 
-**For Customers:**
+## 🚀 Quick Start
 
-- **Browse Local Sellers:** Discover a diverse range of Injera producers in your area.
-- **Explore Offerings:** View different types of Injera, pricing, and seller details.
-- **Convenient Ordering:** Easily place orders directly with chosen sellers.
-- **Flexible Options:** Choose between pickup from the seller's location or delivery services (if offered).
-- **Secure Interactions:** (Future implementation: Secure payment processing).
-- **Support Local Businesses:** Directly contribute to the growth of local food vendors.
+### Prerequisites
+- Go 1.19+
+- Node.js 18+
+- PostgreSQL 13+
+- Docker (optional)
 
-**For Sellers:**
+### Installation
 
-- **Seller Registration:** Simple process to create an account and start listing products.
-- **Product Posting:** Ability to add details about their Injera (type, ingredients, pricing, availability).
-- **Payment Options:** Specify accepted payment methods.
-- **Delivery Management:** Indicate delivery areas and options (if applicable).
-- **Order Management:** Track and manage incoming orders efficiently.
-- **Expand Reach:** Connect with a wider customer base beyond their immediate vicinity.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/TD0961/Injera--Gebeya-Platform.git
+   cd Injera--Gebeya-Platform
+   ```
 
-## Technologies Used
+2. **Setup Database**
+   ```bash
+   docker-compose up -d
+   ```
 
-- **Frontend:** (e.g., React, Vue.js, HTML, CSS, JavaScript)
-- **Backend:** Node.js with Express.js
-- **Database:** (e.g., MongoDB, PostgreSQL)
-- **Other:** (e.g., Tailwind CSS for styling)
+3. **Backend Setup**
+   ```bash
+   cd Server
+   cp .env.example .env  # Configure your environment variables
+   go mod download
+   go run main.go
+   ```
 
-## Setup and Installation
+4. **Frontend Setup**
+   ```bash
+   cd Client
+   cp .env.example .env  # Configure your environment variables
+   npm install
+   npm run dev
+   ```
 
-**For Development (if you are a developer contributing to the project):**
+5. **Access the Application**
+   - Frontend: http://localhost:5174
+   - Backend API: http://localhost:3000
 
-1.  **Clone the repository:**
+## 🔧 Environment Variables
 
-    ```bash
-    git clone <repository_url>
-    cd injera-gebeya
-    ```
+### Server (.env)
+```bash
+DB_HOST=localhost
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=egebeya
+DB_PORT=5432
+JWT_SECRET=your_jwt_secret
+STRIPE_SECRET_KEY=your_stripe_key
+CHAPA_SECRET_KEY=your_chapa_key
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email
+SMTP_PASSWORD=your_app_password
+FROM_EMAIL=noreply@eGebeya.com
+```
 
-2.  **Navigate to the client-side directory:**
+### Client (.env)
+```bash
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+```
 
-    ```bash
-    cd client
-    ```
+## 📱 Features in Detail
 
-    Install frontend dependencies:
+### Authentication & Security
+- Email verification with 6-digit codes
+- JWT-based authentication
+- Role-based access control (Buyer/Seller)
+- Input validation and sanitization
+- Rate limiting and security headers
 
-    ```bash
-    npm install  # or yarn install
-    ```
+### Order Management
+- 4-step order workflow (Pending → Confirmed → Shipped → Delivered)
+- Real-time status updates
+- Optimistic locking for concurrent updates
+- Order history and tracking
 
-3.  **Navigate to the server-side directory:**
+### Payment Processing
+- Chapa integration for Ethiopian market
+- Stripe integration for international payments
+- Secure payment callbacks and webhooks
+- Payment success/failure handling
 
-    ```bash
-    cd ../server
-    ```
+## 🏗️ Project Structure
 
-    Install backend dependencies:
+```
+Injera--Gebeya-Platform/
+├── Client/                 # React frontend
+│   ├── src/
+│   │   ├── components/     # Reusable components
+│   │   ├── pages/         # Page components
+│   │   ├── contexts/      # State management
+│   │   └── assets/        # Static assets
+├── Server/                # Go backend
+│   ├── handlers/          # API endpoints
+│   ├── models/           # Database models
+│   ├── middleware/       # Security & validation
+│   ├── services/         # Business logic
+│   └── config/           # Configuration
+└── docker-compose.yml    # Database setup
+```
 
-    ```bash
-    npm install  # or yarn install
-    ```
+## 🔒 Security Features
 
-4.  **Configuration:**
+- **Authentication**: JWT tokens with email verification
+- **Authorization**: Role-based access control
+- **Input Validation**: XSS and SQL injection prevention
+- **Rate Limiting**: API abuse protection
+- **Security Headers**: Comprehensive HTTP security
+- **Data Protection**: Sensitive data encryption and masking
 
-    - Create a `.env` file in both the `client` and `server` directories based on the `.env.example` files (if provided).
-    - Configure database connection details, API keys, etc., in the `.env` files.
+## 🚀 Deployment
 
-5.  **Running the development servers:**
+### Production Checklist
+- [ ] Configure environment variables
+- [ ] Set up SSL certificates
+- [ ] Configure database backups
+- [ ] Set up monitoring and logging
+- [ ] Configure CDN for static assets
+- [ ] Set up CI/CD pipeline
 
-    - **Frontend:**
+### Docker Deployment
+```bash
+# Build and run with Docker Compose
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-      ```bash
-      cd client
-      npm run dev  # or yarn dev (depending on your frontend framework)
-      ```
+## 🤝 Contributing
 
-    - **Backend:**
-      ```bash
-      cd ../server
-      npm run dev  # or nodemon server.js (depending on your backend setup)
-      ```
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-    Refer to the specific documentation for the frontend and backend frameworks for more detailed development setup.
+## 📄 License
 
-## Usage
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**For Customers:**
+## 📞 Support
 
-1.  Open the Injera Gebeya website in your web browser.
-2.  Browse the list of local sellers.
-3.  View the products offered by each seller.
-4.  Select the Injera you want to purchase and add it to your cart (if implemented) or directly contact the seller.
-5.  Follow the seller's instructions for ordering, payment, and pickup/delivery.
-
-**For Sellers:**
-
-1.  Register for an account on the Injera Gebeya platform.
-2.  Log in to your seller dashboard.
-3.  Create listings for your Injera products, including details, pricing, and availability.
-4.  Specify your accepted payment methods and delivery options.
-5.  Manage incoming orders and communicate with customers.
-
-## Contributing
-
-(If you are open to contributions)
-
-We welcome contributions to the Injera Gebeya project! If you'd like to contribute, please follow these steps:
-
-1.  Fork the repository on GitHub.
-2.  Create a new branch for your feature or bug fix:
-    ```bash
-    git checkout -b feature/your-feature-name
-    ```
-3.  Make your changes and commit them:
-    ```bash
-    git commit -m "Add your feature description"
-    ```
-4.  Push your changes to your forked repository:
-    ```bash
-    git push origin feature/your-feature-name
-    ```
-5.  Create a pull request to the main repository.
-
-Please adhere to any coding standards or guidelines outlined in the project.
-
-## Future Enhancements
-
-- Secure online payment integration.
-- Customer reviews and ratings for sellers.
-- Advanced search and filtering options.
-- Order tracking for deliveries.
-- Seller analytics and reporting.
-- Integration with map services for location-based search and delivery.
-- Multi-language support.
-
-## License
-
-(Add your project's license here, e.g., MIT License)
+For support, email support@eGebeya.com or create an issue in the repository.
 
 ---
 
-**Thank you for exploring Injera Gebeya! We hope to bring the delicious tradition of Injera closer to you.**
+**Built with ❤️ for the Ethiopian food community**

@@ -45,7 +45,7 @@ func VerifyEmail(c *fiber.Ctx) error {
 				"error": "Invalid or expired verification code",
 			})
 		}
-		log.Printf("Error finding pending registration by token: %v", result.Error)
+		// Log error for monitoring
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Internal server error",
 		})
@@ -64,28 +64,21 @@ func VerifyEmail(c *fiber.Ctx) error {
 
 	// Create the user in the database
 	if err := config.DB.Create(&user).Error; err != nil {
-		log.Printf("Error creating user from pending registration: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create user account",
 		})
 	}
 
 	// Delete the pending registration
-	if err := config.DB.Delete(&pendingReg).Error; err != nil {
-		log.Printf("Warning: Failed to delete pending registration: %v", err)
-	}
+	config.DB.Delete(&pendingReg)
 
 	// Send welcome email
 	emailService := services.NewEmailService()
 	if emailService.IsEmailConfigured() {
 		go func() {
-			if err := emailService.SendWelcomeEmail(user.Email, user.Name); err != nil {
-				log.Printf("Failed to send welcome email: %v", err)
-			}
+			emailService.SendWelcomeEmail(user.Email, user.Name)
 		}()
 	}
-
-	log.Printf("✅ Email verified successfully for user: %s (%s)", user.Name, user.Email)
 
 	return c.JSON(fiber.Map{
 		"message": "Email verified successfully! You can now log in.",

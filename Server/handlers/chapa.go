@@ -156,10 +156,7 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 	}
 	chapaURL := "https://api.chapa.co/v1/transaction/initialize"
 
-	fmt.Printf("🚀 Creating REAL Chapa payment for %s %s (%s)\n", req.FirstName, req.LastName, req.Email)
-	fmt.Printf("📱 Phone: %s\n", req.PhoneNumber)
-	fmt.Printf("💰 Amount: %.2f %s\n", req.Amount, req.Currency)
-	fmt.Printf("🔗 Transaction Reference: %s\n", req.TxRef)
+	// Creating Chapa payment for user
 
 	// Prepare the request data for Chapa API (real format)
 	requestData := map[string]interface{}{
@@ -187,7 +184,7 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 		})
 	}
 
-	fmt.Printf("📤 Sending to REAL Chapa API: %s\n", string(jsonData))
+	// Sending payment request to Chapa API
 
 	// Create HTTP request to Chapa API
 	httpReq, err := http.NewRequest("POST", chapaURL, strings.NewReader(string(jsonData)))
@@ -205,14 +202,11 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 	client := &http.Client{Timeout: 30 * time.Second} // Add timeout
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		fmt.Printf("❌ Failed to connect to Chapa: %v\n", err)
 		return c.Status(500).JSON(fiber.Map{
-			"error": "Failed to connect to Chapa API: " + err.Error(),
+			"error": "Failed to connect to Chapa API",
 		})
 	}
 	defer resp.Body.Close()
-
-	fmt.Printf("📡 Chapa API Status Code: %d\n", resp.StatusCode)
 
 	// Read response
 	body, err := io.ReadAll(resp.Body)
@@ -222,22 +216,16 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 		})
 	}
 
-	fmt.Printf("📡 Raw Chapa API Response: %s\n", string(body))
-
 	// Parse Chapa response
 	var chapaResp ChapaPaymentResponse
 	if err := json.Unmarshal(body, &chapaResp); err != nil {
-		fmt.Printf("❌ Failed to parse Chapa response: %v\n", err)
 		return c.Status(500).JSON(fiber.Map{
-			"error":        "Invalid response from Chapa API",
-			"raw_response": string(body),
-			"details":      err.Error(),
+			"error": "Invalid response from Chapa API",
 		})
 	}
 
 	// Check if Chapa returned an error
 	if chapaResp.Status != "success" {
-		fmt.Printf("❌ Chapa API returned error: %v\n", chapaResp.Message)
 
 		// Try to parse as error response for better error messages
 		var chapaError ChapaErrorResponse
@@ -279,7 +267,7 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 		"currency":  req.Currency,
 	}
 
-	fmt.Printf("✅ Chapa payment created successfully: %s\n", chapaResp.Data.CheckoutURL)
+	// Payment created successfully
 
 	return c.JSON(response)
 }
@@ -322,9 +310,7 @@ func ChapaCallback(c *fiber.Ctx) error {
 		}
 	}
 
-	fmt.Printf("🔔 Chapa callback received:\n")
-	fmt.Printf("   Transaction Reference: %s\n", txRef)
-	fmt.Printf("   Status: %s\n", status)
+	// Chapa callback received
 	if txRef == "" {
 		// If we still don't have txRef, redirect back with failure to avoid blank page
 		return c.Redirect("http://localhost:5174/payment-success?status=failed")
@@ -337,18 +323,14 @@ func ChapaCallback(c *fiber.Ctx) error {
 			// Create the actual order
 			order, err := createOrderFromPending(pendingOrder, txRef)
 			if err != nil {
-				fmt.Printf("❌ Error creating order: %v\n", err)
-				return c.Redirect("http://localhost:5175/payment-success?tx_ref=" + txRef + "&status=error&error=" + err.Error())
+				return c.Redirect("http://localhost:5174/payment-success?tx_ref=" + txRef + "&status=error")
 			}
 
 			// Clean up pending order
 			sessionStorage.DeletePendingOrder(txRef)
-
-			fmt.Printf("✅ Order created successfully: %s\n", order.OrderNumber)
 			// Redirect with both order_id and tx_ref for robustness
 			return c.Redirect("http://localhost:5174/payment-success?status=success&order_id=" + fmt.Sprintf("%d", order.ID) + "&tx_ref=" + txRef)
 		} else {
-			fmt.Printf("⚠️ No pending order found for tx_ref: %s\n", txRef)
 			return c.Redirect("http://localhost:5174/payment-success?tx_ref=" + txRef + "&status=success")
 		}
 	}
@@ -377,7 +359,6 @@ func VerifyChapaPayment(c *fiber.Ctx) error {
 	}
 
 	// In test mode, simulate payment verification
-	fmt.Printf("🔍 TEST MODE: Verifying payment for transaction: %s\n", txRef)
 
 	// Mock verification response
 	response := fiber.Map{

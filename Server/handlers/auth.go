@@ -4,7 +4,6 @@ import (
 	"injera-gebeya-platform/Server/config"
 	"injera-gebeya-platform/Server/models"
 	"injera-gebeya-platform/Server/services"
-	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,7 +35,6 @@ func Register(c *fiber.Ctx) error {
 	emailService := services.NewEmailService()
 	code, err := emailService.GenerateVerificationCode()
 	if err != nil {
-		log.Printf("Error generating verification code: %v", err)
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate verification code"})
 	}
 
@@ -86,18 +84,10 @@ func Register(c *fiber.Ctx) error {
 	emailSent := false
 	if emailService.IsEmailConfigured() {
 		go func() {
-			if err := emailService.SendVerificationEmail(input.Email, input.Name, code); err != nil {
-				log.Printf("Failed to send verification email: %v", err)
-			} else {
-				log.Printf("📧 Verification email sent to: %s", input.Email)
-			}
+			emailService.SendVerificationEmail(input.Email, input.Name, code)
 		}()
 		emailSent = true
-	} else {
-		log.Printf("⚠️ Email service not configured. Verification code for %s: %s", input.Email, code)
 	}
-
-	log.Printf("📧 Pending registration created: %s (%s)", input.Name, input.Email)
 
 	response := fiber.Map{
 		"message":              "Registration successful! Please verify your account.",
