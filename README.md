@@ -2,7 +2,7 @@
 
 **Ethiopian Food Marketplace - Connecting Authentic Flavors with Modern Technology**
 
-## 🍽️ Overview
+## Overview
 
 eGebeya is a full-stack e-commerce platform specializing in Ethiopian cuisine, particularly Injera and traditional dishes. The platform connects local food vendors with customers, providing a seamless ordering experience with secure payment processing and real-time order management.
 
@@ -187,5 +187,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For support, email support@eGebeya.com or create an issue in the repository.
 
 ---
-
-**Built with ❤️ for the Ethiopian food community**

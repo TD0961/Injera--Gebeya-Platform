@@ -3,6 +3,22 @@ Server/.env
 Client/node_modules
 Server/node_modules
 
+# Go binaries
+Server/injera-server
+Server/*.exe
+Server/*.dll
+Server/*.so
+Server/*.dylib
+
+# Build artifacts
+dist/
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
 # Logs
 logs
 *.log
