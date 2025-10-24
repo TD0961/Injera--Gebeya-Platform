@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/stripe/stripe-go/v76"
-	"github.com/stripe/stripe-go/v76/paymentintent"
+	"github.com/stripe/stripe-go/v75"
+	"github.com/stripe/stripe-go/v75/paymentintent"
+	"github.com/stripe/stripe-go/v75/webhook"
 )
 
 type CreatePaymentIntentRequest struct {
@@ -24,7 +24,7 @@ type CreatePaymentIntentResponse struct {
 	PaymentIntentID string `json:"paymentIntentId"`
 }
 
-func CreatePaymentIntent(c *fiber.Ctx) error {
+func CreateStripePaymentIntent(c *fiber.Ctx) error {
 	var req CreatePaymentIntentRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
@@ -87,7 +87,7 @@ func CreatePaymentIntent(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
-func HandleStripeWebhook(c *fiber.Ctx) error {
+func StripeWebhook(c *fiber.Ctx) error {
 	// Get the webhook signature
 	signature := c.Get("Stripe-Signature")
 	if signature == "" {
@@ -104,7 +104,7 @@ func HandleStripeWebhook(c *fiber.Ctx) error {
 
 	// Parse the webhook event
 	payload := c.Body()
-	event, err := stripe.ConstructEvent(payload, signature, webhookSecret)
+	event, err := webhook.ConstructEvent(payload, signature, webhookSecret)
 	if err != nil {
 		log.Printf("❌ Error parsing webhook: %v", err)
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid signature"})
