@@ -20,7 +20,7 @@ type CreatePaymentIntentRequest struct {
 }
 
 type CreatePaymentIntentResponse struct {
-	ClientSecret string `json:"clientSecret"`
+	ClientSecret    string `json:"clientSecret"`
 	PaymentIntentID string `json:"paymentIntentId"`
 }
 
@@ -58,8 +58,8 @@ func CreateStripePaymentIntent(c *fiber.Ctx) error {
 
 	// Create payment intent
 	params := &stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(req.Amount),
-		Currency: stripe.String(req.Currency),
+		Amount:      stripe.Int64(req.Amount),
+		Currency:    stripe.String(req.Currency),
 		Description: stripe.String(req.Description),
 		Metadata: map[string]string{
 			"order_id": strconv.Itoa(int(req.OrderID)),
@@ -80,7 +80,7 @@ func CreateStripePaymentIntent(c *fiber.Ctx) error {
 	log.Printf("✅ Payment intent created successfully: %s", pi.ID)
 
 	response := CreatePaymentIntentResponse{
-		ClientSecret: pi.ClientSecret,
+		ClientSecret:    pi.ClientSecret,
 		PaymentIntentID: pi.ID,
 	}
 
@@ -119,9 +119,9 @@ func StripeWebhook(c *fiber.Ctx) error {
 			log.Printf("❌ Error parsing payment_intent.succeeded: %v", err)
 			return c.Status(400).JSON(fiber.Map{"error": "Error parsing event"})
 		}
-		
+
 		log.Printf("✅ Payment succeeded: %s", paymentIntent.ID)
-		
+
 		// Update order status in database
 		orderIDStr := paymentIntent.Metadata["order_id"]
 		if orderIDStr != "" {
@@ -140,7 +140,7 @@ func StripeWebhook(c *fiber.Ctx) error {
 			log.Printf("❌ Error parsing payment_intent.payment_failed: %v", err)
 			return c.Status(400).JSON(fiber.Map{"error": "Error parsing event"})
 		}
-		
+
 		log.Printf("❌ Payment failed: %s", paymentIntent.ID)
 
 	default:
