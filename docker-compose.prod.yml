@@ -1,0 +1,183 @@
+# ===========================================
+# PRODUCTION DOCKER COMPOSE
+# ===========================================
+# What: Production orchestration for eGebeya platform
+# Why: Easy deployment and management of all services
+# Where: Run with: docker compose -f docker-compose.prod.yml up -d
+# Security: Uses env.prod file for sensitive values
+
+services:
+  # Database service
+  # What: PostgreSQL database for the application
+  # Why: Stores all application data persistently
+  # Where: Uses official PostgreSQL Docker image
+  db:
+    # Database image
+    # What: Uses PostgreSQL 15 official image
+    # Why: Reliable, well-maintained database
+    # Where: Docker Hub official image
+    image: postgres:15
+    
+    # Container name
+    # What: Sets a specific name for the container
+    # Why: Makes it easier to reference the container
+    # Where: Container naming
+    container_name: egebeya-db
+    
+    # Restart policy
+    # What: Restarts container if it stops
+    # Why: Ensures database is always available
+    # Where: Container lifecycle management
+    restart: unless-stopped
+    
+    # Environment variables
+    # What: Sets database configuration
+    # Why: Database needs these settings to work properly
+    # Where: Environment configuration
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    
+    # Persistent storage
+    # What: Creates a named volume for data persistence
+    # Why: Database data survives container restarts
+    # Where: Volume configuration
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    
+    # Network
+    # What: Connects to the application network
+    # Why: Allows communication with other services
+    # Where: Network configuration
+    networks:
+      - egebeya-network
+
+  # Backend service
+  # What: Go API server
+  # Why: Handles all business logic and API endpoints
+  # Where: Built from Server/Dockerfile
+  backend:
+    # Build from Dockerfile
+    # What: Builds image from Server/Dockerfile
+    # Why: Creates custom image for our Go application
+    # Where: Build configuration
+    build:
+      context: ./Server
+      dockerfile: Dockerfile
+    
+    # Environment file
+    # What: Loads production environment variables
+    # Why: Keeps sensitive data separate from code
+    # Where: From env.prod file
+    env_file:
+      - env.prod
+    
+    # Container name
+    # What: Sets a specific name for the container
+    # Why: Makes it easier to reference the container
+    # Where: Container naming
+    container_name: egebeya-backend
+    
+    # Restart policy
+    # What: Restarts container if it stops
+    # Why: Ensures backend is always available
+    # Where: Container lifecycle management
+    restart: unless-stopped
+    
+    # Port mapping
+    # What: Maps host port 3000 to container port 3000
+    # Why: Allows external connections to the backend API
+    # Where: Port configuration
+    ports:
+      - "3000:3000"
+    
+    # Dependencies
+    # What: Backend depends on database
+    # Why: Backend can't start until database is ready
+    # Where: Service dependencies
+    depends_on:
+      - db
+    
+    # Network
+    # What: Connects to the application network
+    # Why: Allows communication with other services
+    # Where: Network configuration
+    networks:
+      - egebeya-network
+
+  # Frontend service
+  # What: React application served by Nginx
+  # Why: Provides user interface for the application
+  # Where: Built from Client/Dockerfile
+  frontend:
+    # Build from Dockerfile
+    # What: Builds image from Client/Dockerfile
+    # Why: Creates custom image for our React application
+    # Where: Build configuration
+    build:
+      context: ./Client
+      dockerfile: Dockerfile
+    
+    # Environment file
+    # What: Loads production environment variables
+    # Why: Keeps sensitive data separate from code
+    # Where: From env.prod file
+    env_file:
+      - env.prod
+    
+    # Container name
+    # What: Sets a specific name for the container
+    # Why: Makes it easier to reference the container
+    # Where: Container naming
+    container_name: egebeya-frontend
+    
+    # Restart policy
+    # What: Restarts container if it stops
+    # Why: Ensures frontend is always available
+    # Where: Container lifecycle management
+    restart: unless-stopped
+    
+    # Port mapping
+    # What: Maps host port 80 to container port 80
+    # Why: Allows external connections to the frontend (production standard)
+    # Where: Port configuration
+    ports:
+      - "80:80"
+    
+    # Dependencies
+    # What: Frontend depends on backend
+    # Why: Frontend needs backend API to work
+    # Where: Service dependencies
+    depends_on:
+      - backend
+    
+    # Network
+    # What: Connects to the application network
+    # Why: Allows communication with other services
+    # Where: Network configuration
+    networks:
+      - egebeya-network
+
+# Volumes
+# What: Defines named volumes for persistent storage
+# Why: Data survives container restarts and updates
+# Where: Volume configuration
+volumes:
+  # Database volume
+  # What: Persistent storage for PostgreSQL data
+  # Why: Database data survives container restarts
+  # Where: Volume definition
+  db_data:
+
+# Networks
+# What: Defines custom network for service communication
+# Why: Isolates services and enables secure communication
+# Where: Network configuration
+networks:
+  # Application network
+  # What: Custom bridge network for all services
+  # Why: Enables service-to-service communication
+  # Where: Network definition
+  egebeya-network:
+    driver: bridge
