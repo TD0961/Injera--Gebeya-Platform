@@ -42,11 +42,14 @@ eGebeya is a full-stack e-commerce platform specializing in Ethiopian cuisine, p
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Development Prerequisites
 - Go 1.19+
 - Node.js 18+
 - PostgreSQL 13+
-- Docker (optional)
+- Docker (for production deployment)
+
+### Production Deployment
+For production deployment, see [PRODUCTION.md](PRODUCTION.md) for Docker-based setup.
 
 ### Installation
 
