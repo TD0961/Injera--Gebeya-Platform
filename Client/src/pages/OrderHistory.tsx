@@ -296,7 +296,7 @@ export default function OrderHistory() {
                   <h3 className="text-lg font-medium text-gray-800 mb-3">Order Status</h3>
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusConfig[selectedOrder.status].color}`}>
-                      <StatusIcon className="inline w-4 h-4 mr-1" />
+                      <div className="inline w-4 h-4 mr-1 rounded-full bg-blue-500" />
                       {statusConfig[selectedOrder.status].label}
                     </span>
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${paymentStatusConfig[selectedOrder.payment_status].color}`}>

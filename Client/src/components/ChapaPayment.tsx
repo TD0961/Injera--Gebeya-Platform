@@ -16,11 +16,11 @@ interface ChapaPaymentProps {
     product_id: number;
     quantity: number;
   }>;
-  onSuccess: (paymentData: any) => void;
+  // onSuccess: (paymentData: any) => void;
   onError: (error: string) => void;
 }
 
-export default function ChapaPayment({ amount, phoneNumber, shippingData, cartItems, onSuccess, onError }: ChapaPaymentProps) {
+export default function ChapaPayment({ amount, phoneNumber, shippingData, cartItems, onError }: ChapaPaymentProps) {
   const { user } = useUser();
   const [isProcessing, setIsProcessing] = useState(false);
 

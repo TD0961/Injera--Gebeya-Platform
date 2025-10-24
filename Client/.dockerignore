@@ -1,0 +1,105 @@
+# ===========================================
+# CLIENT .DOCKERIGNORE
+# ===========================================
+
+# What: Excludes files from Docker build context
+# Why: Reduces build time and image size
+# Where: Client directory
+
+# Git files
+# What: Excludes Git repository files
+# Why: Not needed in container, reduces build context
+# Where: Git-related files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+# What: Excludes documentation files
+# Why: Not needed in production container
+# Where: Documentation files
+README.md
+*.md
+
+# Environment files
+# What: Excludes environment files
+# Why: Environment variables are set in docker-compose
+# Where: Environment configuration files
+.env
+.env.*
+*.env
+
+# Node modules
+# What: Excludes node_modules directory
+# Why: We install dependencies inside the container
+# Where: Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+# What: Excludes build output
+# Why: We build the application inside the container
+# Where: Build output files
+dist/
+build/
+.next/
+out/
+
+# IDE files
+# What: Excludes IDE configuration files
+# Why: Not needed in production container
+# Where: IDE-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+# What: Excludes operating system files
+# Why: Not needed in container
+# Where: OS-specific files
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Test files
+# What: Excludes test files
+# Why: Not needed in production container
+# Where: Test-related files
+__tests__/
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+test/
+tests/
+coverage/
+
+# Log files
+# What: Excludes log files
+# Why: Not needed in container
+# Where: Log files
+*.log
+logs/
+
+# Cache files
+# What: Excludes cache files
+# Why: Not needed in container
+# Where: Cache files
+.cache/
+cache/
+.parcel-cache/
+
+# Package manager files
+# What: Excludes package manager files
+# Why: Not needed in container
+# Where: Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

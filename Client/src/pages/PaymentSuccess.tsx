@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle, ArrowLeft, Package, MapPin, Phone } from 'lucide-react';
+import { CheckCircle, Package, MapPin, Phone } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import bg from '../assets/hero.jpg';
 
@@ -28,7 +28,7 @@ export default function PaymentSuccess() {
   // Get order data from location state (passed from checkout) or fetch from API
   const [orderData, setOrderData] = useState(location.state?.orderData);
   const [isLoadingOrder, setIsLoadingOrder] = useState(false);
-  const paymentData = location.state?.paymentData;
+  // const paymentData = location.state?.paymentData;
   const shippingData = location.state?.shippingData;
   const orderTotal = location.state?.orderTotal;
 

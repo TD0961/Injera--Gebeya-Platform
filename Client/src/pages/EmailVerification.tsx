@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, Mail, RefreshCw, ArrowLeft } from 'lucide-react';
+import { CheckCircle, XCircle, Mail, ArrowLeft } from 'lucide-react';
 import bgImg from '../assets/hero.jpg';
 import Logo from '../assets/Logo';
 
-interface VerificationInfo {
-  emailVerified: boolean;
-  email: string;
-  tokenExpiry?: string;
-  canResend?: boolean;
-}
+// interface VerificationInfo {
+//   emailVerified: boolean;
+//   email: string;
+//   tokenExpiry?: string;
+//   canResend?: boolean;
+// }
 
 export default function EmailVerification() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function EmailVerification() {
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [canResend, setCanResend] = useState(false);
+  // const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 

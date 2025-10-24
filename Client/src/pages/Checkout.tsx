@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, MapPin, Phone, CreditCard } from "lucide-react";
+import { ArrowLeft, User, CreditCard } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import ChapaPayment from "../components/ChapaPayment";
 import StripePayment from "../components/StripePayment";
@@ -19,7 +19,7 @@ export default function Checkout() {
     notes: "",
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment'>('shipping');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'chapa' | 'stripe'>('chapa');

@@ -1,0 +1,83 @@
+# ===========================================
+# SERVER .DOCKERIGNORE
+# ===========================================
+
+# What: Excludes files from Docker build context
+# Why: Reduces build time and image size
+# Where: Server directory
+
+# Git files
+# What: Excludes Git repository files
+# Why: Not needed in container, reduces build context
+# Where: Git-related files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+# What: Excludes documentation files
+# Why: Not needed in production container
+# Where: Documentation files
+README.md
+SECURITY.md
+*.md
+
+# Environment files
+# What: Excludes environment files
+# Why: Environment variables are set in docker-compose
+# Where: Environment configuration files
+.env
+.env.*
+*.env
+
+# Build artifacts
+# What: Excludes compiled binaries
+# Why: We build the binary inside the container
+# Where: Build output files
+injera-server
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE files
+# What: Excludes IDE configuration files
+# Why: Not needed in production container
+# Where: IDE-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+# What: Excludes operating system files
+# Why: Not needed in container
+# Where: OS-specific files
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Test files
+# What: Excludes test files
+# Why: Not needed in production container
+# Where: Test-related files
+*_test.go
+test/
+tests/
+*.test
+
+# Log files
+# What: Excludes log files
+# Why: Not needed in container
+# Where: Log files
+*.log
+logs/
+
+# Cache files
+# What: Excludes cache files
+# Why: Not needed in container
+# Where: Cache files
+.cache/
+cache/
