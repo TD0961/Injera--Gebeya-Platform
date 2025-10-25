@@ -51,10 +51,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o injera-server mai
 FROM alpine:3.20
 
 # Install runtime dependencies
-# What: Installs ca-certificates and timezone data
-# Why: HTTPS connections and proper timezone handling
+# What: Installs ca-certificates, timezone data, and curl for health checks
+# Why: HTTPS connections, proper timezone handling, and health checks
 # Where: Alpine package manager installs these
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata curl
 
 # Create non-root user for security
 # What: Creates user 'appuser' with UID 1001
@@ -97,7 +97,7 @@ EXPOSE 3000
 # Why: Container orchestration can restart unhealthy containers
 # Where: Docker health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:3000/health || exit 1
 
 # Run the application
 # What: Starts the Go application when container starts

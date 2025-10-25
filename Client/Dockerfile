@@ -24,7 +24,7 @@ COPY package*.json ./
 # What: Downloads and installs all npm packages
 # Why: Dependencies are needed to build the React application
 # Where: Downloads to container's node_modules
-RUN npm install
+RUN npm install --no-audit --no-fund
 
 # Copy source code
 # What: Copies all React source files
@@ -60,7 +60,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # What: Creates user 'nginx' with UID 101
 # Why: Security best practice - don't run as root
 # Where: Creates user in container's /etc/passwd
-RUN adduser -D -s /bin/sh -u 101 nginx
+RUN adduser -D -s /bin/sh -u 101 nginx || echo "User nginx already exists"
 
 # Set proper permissions
 # What: Changes ownership of Nginx files to nginx user
@@ -76,7 +76,8 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 # Why: Nginx needs a place to store its process ID
 # Where: Creates directory in container filesystem
 RUN mkdir -p /var/run/nginx && \
-    chown -R nginx:nginx /var/run/nginx
+    chown -R nginx:nginx /var/run/nginx && \
+    chmod 755 /var/run/nginx
 
 # Switch to non-root user
 # What: Changes from root user to nginx
@@ -95,7 +96,7 @@ EXPOSE 80
 # Why: Container orchestration can restart unhealthy containers
 # Where: Docker health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:80 || exit 1
+    CMD curl -f http://localhost:80/health || exit 1
 
 # Run Nginx
 # What: Starts Nginx web server when container starts

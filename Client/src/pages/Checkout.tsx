@@ -310,12 +310,18 @@ export default function Checkout() {
                   <ChapaPayment
                     amount={getTotalPrice()}
                     phoneNumber={formData.shippingPhone}
-                    shippingData={formData}
+                    shippingData={{
+                      shipping_address: formData.shippingAddress,
+                      shipping_city: formData.shippingCity,
+                      shipping_state: formData.shippingState,
+                      shipping_zip: formData.shippingZip,
+                      shipping_phone: formData.shippingPhone,
+                      notes: formData.notes
+                    }}
                     cartItems={cart.map(item => ({
                       product_id: item.product.id,
                       quantity: item.quantity
                     }))}
-                    onSuccess={handlePaymentSuccess}
                     onError={handlePaymentError}
                   />
                 ) : (

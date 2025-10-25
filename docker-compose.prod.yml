@@ -35,9 +35,9 @@ services:
     # Why: Database needs these settings to work properly
     # Where: Environment configuration
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: egebeya
     
     # Persistent storage
     # What: Creates a named volume for data persistence
