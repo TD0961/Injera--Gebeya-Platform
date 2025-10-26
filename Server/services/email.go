@@ -19,13 +19,14 @@ type EmailService struct {
 }
 
 func NewEmailService() *EmailService {
-	return &EmailService{
+	es := &EmailService{
 		SMTPHost:     getEnv("SMTP_HOST", "smtp.gmail.com"),
 		SMTPPort:     getEnv("SMTP_PORT", "587"),
 		SMTPUsername: getEnv("SMTP_USERNAME", ""),
 		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
-		FromEmail:    getEnv("FROM_EMAIL", "noreply@injera-gebeya.com"),
 	}
+	es.FromEmail = getEnv("FROM_EMAIL", es.SMTPUsername)
+	return es
 }
 
 func getEnv(key, defaultValue string) string {
@@ -149,7 +150,17 @@ func (es *EmailService) SendVerificationEmail(email, name, code string) error {
 	auth := smtp.PlainAuth("", es.SMTPUsername, es.SMTPPassword, es.SMTPHost)
 	addr := es.SMTPHost + ":" + es.SMTPPort
 
-	return smtp.SendMail(addr, auth, es.FromEmail, []string{email}, []byte(message))
+	log.Printf("📧 Attempting to send email to: %s", email)
+	log.Printf("📧 SMTP Server: %s", addr)
+	log.Printf("📧 From: %s", es.FromEmail)
+
+	if err := smtp.SendMail(addr, auth, es.FromEmail, []string{email}, []byte(message)); err != nil {
+		log.Printf("❌ Failed to send email to %s: %v", email, err)
+		return fmt.Errorf("failed to send email: %v", err)
+	}
+
+	log.Printf("✅ Email sent successfully to: %s", email)
+	return nil
 }
 
 // SendWelcomeEmail sends welcome email after verification
