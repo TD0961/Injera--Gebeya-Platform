@@ -1,0 +1,41 @@
+# Railway ignore file
+# Exclude files that shouldn't be sent to Railway
+
+# Environment files
+.env
+.env.local
+.env.production
+env.prod
+env.prod.template
+env.railway.template
+
+# Docker compose files (not needed for Railway)
+docker-compose.yml
+docker-compose.prod.yml
+
+# Documentation
+README.md
+PRODUCTION.md
+SECURITY.md
+
+# Git
+.git
+.gitignore
+
+# Client files (deploy separately)
+Client/
+
+# Test files
+*_test.go
+test/
+tests/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
