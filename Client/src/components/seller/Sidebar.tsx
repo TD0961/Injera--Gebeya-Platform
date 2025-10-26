@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../contexts/UserContext";
+import { Eye } from "lucide-react";
 
 interface Props {
   activeTab: "products" | "add" | "orders";
@@ -53,6 +54,14 @@ export default function Sidebar({ activeTab, setActiveTab }: Props) {
             }`}
           >
             Manage Orders
+          </button>
+
+          <button
+            onClick={() => navigate('/products')}
+            className="text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 text-gray-700 hover:bg-gray-50"
+          >
+            <Eye className="w-4 h-4" />
+            View All Products
           </button>
         </nav>
 

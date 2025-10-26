@@ -2,13 +2,26 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Minus, Clock, ShoppingCart } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
+import { useUser } from "../contexts/UserContext";
 import bg from "../assets/hero.jpg";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, getTotalPrice, resetCart, ensurePaymentDeadline, clearPaymentDeadline, getTimeLeftSeconds } = useCart();
+  const { user } = useUser();
   const [timeLeft, setTimeLeft] = useState(0);
   const [isPaymentActive, setIsPaymentActive] = useState(false);
   const navigate = useNavigate();
+
+  // Redirect sellers to product listing with message
+  useEffect(() => {
+    if (user && user.role === 'seller') {
+      navigate('/products', { 
+        state: { 
+          message: "Sellers cannot access the shopping cart. You can only manage your products and orders from your seller dashboard." 
+        } 
+      });
+    }
+  }, [user, navigate]);
 
   // Initialize timer when arriving with items; do not restart if deadline exists
   useEffect(() => {

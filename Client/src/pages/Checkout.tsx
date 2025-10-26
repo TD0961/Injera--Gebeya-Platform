@@ -1,14 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, User, CreditCard } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
+import { useUser } from "../contexts/UserContext";
 import ChapaPayment from "../components/ChapaPayment";
 import StripePayment from "../components/StripePayment";
 import bg from "../assets/hero.jpg";
 
 export default function Checkout() {
   const { cart, getTotalPrice } = useCart();
+  const { user } = useUser();
   const navigate = useNavigate();
+
+  // Redirect sellers to product listing with message
+  useEffect(() => {
+    if (user && user.role === 'seller') {
+      navigate('/products', { 
+        state: { 
+          message: "Sellers cannot access the checkout page. You can only manage your products and orders from your seller dashboard." 
+        } 
+      });
+    }
+  }, [user, navigate]);
 
   const [formData, setFormData] = useState({
     shippingAddress: "",

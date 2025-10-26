@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Search, ShoppingCart, Filter, Star, Heart, Eye, Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Search, ShoppingCart, Filter, Star, Heart, Eye, Plus, AlertCircle } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "../assets/Logo";
 import UserDropdown from "../components/UserDropdown";
 import { useCart } from "../contexts/CartContext";
+import { useUser } from "../contexts/UserContext";
 import bg from "../assets/hero.jpg";
 
 interface Product {
@@ -34,6 +35,11 @@ export default function ProductListing() {
   const [loading, setLoading] = useState(true);
   const { cart, addToCart, getTotalItems, getCartItemQuantity, ensurePaymentDeadline } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useUser();
+  
+  // Get message from navigation state
+  const message = location.state?.message;
 
   // 🧭 Fetch products
   useEffect(() => {
@@ -205,6 +211,27 @@ export default function ProductListing() {
 
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto py-8 px-4">
+        {/* Message for sellers */}
+        {message && (
+          <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg shadow-md">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
+              <div>
+                <h3 className="text-sm font-medium text-yellow-800">Access Restricted</h3>
+                <p className="text-sm text-yellow-700 mt-1">{message}</p>
+                {user?.role === 'seller' && (
+                  <button
+                    onClick={() => navigate('/seller/dashboard')}
+                    className="mt-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition"
+                  >
+                    Go to Seller Dashboard
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Filters and Sort Bar */}
         <div className="bg-white/90 backdrop-blur-md rounded-lg p-4 mb-6 shadow-lg">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">

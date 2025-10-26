@@ -8,6 +8,7 @@ import bgImg from "../assets/hero.jpg";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useUser } from "../contexts/UserContext";
+import { Eye } from "lucide-react";
 import {
   getMyProducts,
   createProduct,
@@ -145,13 +146,23 @@ export default function SellerDashboard() {
                     Welcome back, <span className="text-yellow-400 font-semibold">{sellerName || "Seller"}</span>!
                   </p>
                 </div>
-                {/* Mobile logout button */}
-                <button
-                  onClick={handleLogout}
-                  className="md:hidden px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-all"
-                >
-                  Logout
-                </button>
+                <div className="flex gap-3 items-center">
+                  {/* Product Listing Button */}
+                  <button
+                    onClick={() => navigate('/products')}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Products
+                  </button>
+                  {/* Mobile logout button */}
+                  <button
+                    onClick={handleLogout}
+                    className="md:hidden px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-all"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             </header>
 

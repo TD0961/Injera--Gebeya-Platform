@@ -40,6 +40,13 @@ func CreateOrder(c *fiber.Ctx) error {
 	// Get user from context (set by auth middleware)
 	user := c.Locals("user").(models.User)
 
+	// Check if user is a buyer (only buyers can create orders)
+	if user.Role != "buyer" {
+		return c.Status(403).JSON(fiber.Map{
+			"error": "Only buyers can create orders. Sellers cannot place orders.",
+		})
+	}
+
 	// Validate that all products exist and have sufficient stock
 	var products []models.Product
 	var productIDs []uint

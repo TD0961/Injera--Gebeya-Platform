@@ -87,6 +87,16 @@ export default function OrderHistory() {
       navigate('/login');
       return;
     }
+    
+    // Redirect sellers to product listing with message
+    if (user.role === 'seller') {
+      navigate('/products', { 
+        state: { 
+          message: "Sellers cannot access order history. You can only manage your products and view your seller orders from your seller dashboard." 
+        } 
+      });
+      return;
+    }
     fetchOrders();
     
     // Auto-refresh every 30 seconds to keep orders in sync

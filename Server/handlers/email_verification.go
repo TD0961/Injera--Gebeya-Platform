@@ -53,17 +53,19 @@ func VerifyEmail(c *fiber.Ctx) error {
 
 	// Create actual user from pending registration
 	user := models.User{
-		Name:          pendingReg.Name,
-		Email:         pendingReg.Email,
-		Password:      pendingReg.Password,
-		Address:       pendingReg.Address,
-		Role:          pendingReg.Role,
-		ShopName:      pendingReg.ShopName,
-		EmailVerified: true,
+		Name:              pendingReg.Name,
+		Email:             pendingReg.Email,
+		Password:          pendingReg.Password,
+		Address:           pendingReg.Address,
+		Role:              pendingReg.Role,
+		ShopName:          pendingReg.ShopName,
+		EmailVerified:     true,
+		VerificationToken: "", // Clear verification token
 	}
 
 	// Create the user in the database
 	if err := config.DB.Create(&user).Error; err != nil {
+		log.Printf("Error creating user: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create user account",
 		})

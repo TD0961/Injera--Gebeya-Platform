@@ -31,9 +31,9 @@ func main() {
 
 	// CORS configuration
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5174,http://localhost:5175",
+		AllowOrigins:     "http://localhost:5174,http://localhost:5175,http://localhost:80,http://localhost",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:     "Origin, Content-Type, Accept, X-Request-ID",
+		AllowHeaders:     "Origin, Content-Type, Accept, X-Request-ID, Authorization",
 		AllowCredentials: true,
 	}))
 
@@ -59,9 +59,9 @@ func main() {
 
 	// Email verification routes
 	app.Post("/api/verify-email", handlers.VerifyEmail)
+	app.Get("/api/verify-email/info", handlers.GetVerificationInfo)
 	app.Post("/api/resend-verification", handlers.ResendVerificationEmail)
 	app.Get("/api/verification-status", middleware.RequireAuth, handlers.CheckVerificationStatus)
-	app.Get("/api/verification-info", handlers.GetVerificationInfo)
 
 	// ✅ New route — no new file needed
 	app.Get("/api/me", middleware.RequireAuth, func(c *fiber.Ctx) error {
@@ -104,7 +104,7 @@ func main() {
 		return c.JSON(fiber.Map{
 			"message":   "Chapa test endpoint",
 			"chapa_url": "https://api.chapa.co/v1/transaction/initialize",
-			"test_key":  "CHASECK_TEST-fnGvtP8fBikY8JetWMgLZX3f3aJ6n7Vi",
+			"note":      "Chapa key configured via environment variables",
 		})
 	})
 
