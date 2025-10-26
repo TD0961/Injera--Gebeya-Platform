@@ -1,0 +1,135 @@
+package main
+
+import (
+	"fmt"
+	"injera-gebeya-platform/config"
+	"injera-gebeya-platform/handlers"
+	"injera-gebeya-platform/middleware"
+	"injera-gebeya-platform/models"
+	"log"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
+)
+
+func main() {
+	fmt.Println("🚀 Starting Injera Gebeya Platform Server...")
+
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️  No .env file found, using system environment variables")
+	}
+
+	app := fiber.New()
+
+	// Security middleware
+	app.Use(middleware.HelmetMiddleware())
+	app.Use(middleware.RequestIDMiddleware())
+	app.Use(middleware.SecurityMiddleware())
+	app.Use(middleware.SanitizeInput)
+
+	// CORS configuration
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:5174,http://localhost:5175,http://localhost:80,http://localhost",
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, X-Request-ID, Authorization",
+		AllowCredentials: true,
+	}))
+
+	fmt.Println("🔗 Connecting to database...")
+	config.ConnectDatabase()
+
+	fmt.Println("📊 Running database migrations...")
+	config.DB.AutoMigrate(&models.User{}, &models.Product{}, &models.Order{}, &models.OrderItem{}, &models.PendingRegistration{})
+	fmt.Println("✅ Database migrations completed!")
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Server running!")
+	})
+
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"status": "ok"})
+	})
+
+	// Authentication routes
+	app.Post("/api/register", handlers.Register)
+	app.Post("/api/login", handlers.Login)
+	app.Post("/api/logout", handlers.Logout)
+
+	// Email verification routes
+	app.Post("/api/verify-email", handlers.VerifyEmail)
+	app.Get("/api/verify-email/info", handlers.GetVerificationInfo)
+	app.Post("/api/resend-verification", handlers.ResendVerificationEmail)
+	app.Get("/api/verification-status", middleware.RequireAuth, handlers.CheckVerificationStatus)
+
+	// ✅ New route — no new file needed
+	app.Get("/api/me", middleware.RequireAuth, func(c *fiber.Ctx) error {
+		user := c.Locals("user").(models.User)
+		return c.JSON(fiber.Map{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		})
+	})
+
+	// Seller routes
+	app.Get("/seller/products", middleware.RequireAuth, handlers.GetSellerProducts)
+	app.Post("/seller/products", middleware.RequireAuth, handlers.CreateProduct)
+	app.Put("/seller/products/:id", middleware.RequireAuth, handlers.UpdateProduct)
+	app.Delete("/seller/products/:id", middleware.RequireAuth, handlers.DeleteProduct)
+
+	// Order routes with rate limiting and validation
+	app.Post("/api/orders", middleware.RequireAuth, middleware.OrderRateLimiter(), middleware.ValidateOrderInput, handlers.CreateOrder)
+	app.Get("/api/orders", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetUserOrders)
+	// Place the more specific tx_ref route BEFORE the :id route to avoid conflicts
+	app.Get("/api/orders/tx/:tx_ref", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetOrderByTxRef)
+	app.Get("/api/orders/:id", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetOrder)
+	app.Put("/api/orders/:id/status", middleware.RequireAuth, middleware.OrderRateLimiter(), middleware.ValidateStatusUpdate, handlers.UpdateOrderStatus)
+	app.Get("/api/seller/orders", middleware.RequireAuth, middleware.RateLimiter(), handlers.GetSellerOrders)
+
+	// Payment routes
+	app.Post("/api/create-payment-intent", middleware.RequireAuth, handlers.CreateStripePaymentIntent)
+	app.Post("/api/stripe/webhook", handlers.StripeWebhook)
+	app.Post("/api/store-pending-order", middleware.RequireAuth, handlers.StorePendingOrder)
+	app.Post("/api/create-chapa-payment", middleware.RequireAuth, handlers.CreateChapaPayment)
+	app.Post("/api/chapa/callback", handlers.ChapaCallback)
+	// Allow browser redirect callbacks as GET too (Chapa redirects users via GET)
+	app.Get("/api/chapa/callback", handlers.ChapaCallback)
+	app.Get("/api/chapa/verify/:tx_ref", handlers.VerifyChapaPayment)
+
+	// Test endpoint for debugging Chapa API
+	app.Get("/api/test-chapa", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"message":   "Chapa test endpoint",
+			"chapa_url": "https://api.chapa.co/v1/transaction/initialize",
+			"note":      "Chapa key configured via environment variables",
+		})
+	})
+
+	app.Get("/products", handlers.GetPublicProducts)
+
+	fmt.Println("🌐 Server starting on port 3000...")
+	fmt.Println("📡 Available endpoints:")
+	fmt.Println("   GET  / - Server status")
+	fmt.Println("   GET  /health - Health check")
+	fmt.Println("   POST /api/register - User registration")
+	fmt.Println("   POST /api/login - User login")
+	fmt.Println("   GET  /products - Get products")
+	fmt.Println("   POST /api/orders - Create order")
+	fmt.Println("   GET  /api/orders - Get user orders")
+	fmt.Println("   GET  /api/orders/:id - Get specific order")
+	fmt.Println("   PUT  /api/orders/:id/status - Update order status")
+	fmt.Println("   GET  /api/seller/orders - Get seller orders")
+	fmt.Println("   POST /api/create-payment-intent - Create Stripe payment intent (TEST MODE)")
+	fmt.Println("   POST /api/stripe/webhook - Stripe webhook handler")
+	fmt.Println("   POST /api/create-chapa-payment - Create Chapa payment (TEST MODE)")
+	fmt.Println("   POST /api/chapa/callback - Chapa payment callback")
+	fmt.Println("   GET  /api/chapa/verify/:tx_ref - Verify Chapa payment")
+
+	err := app.Listen(":3000")
+	if err != nil {
+		fmt.Printf("❌ Server failed to start: %v\n", err)
+	}
+}
