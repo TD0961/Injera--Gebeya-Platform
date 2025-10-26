@@ -98,7 +98,7 @@ func Register(c *fiber.Ctx) error {
 	// Include verification token in development mode when email is not configured
 	if !emailSent {
 		response["verificationCode"] = code
-		response["verificationURL"] = "http://localhost:5174/verify-email"
+		response["verificationURL"] = os.Getenv("FRONTEND_URL") + "/verify-email"
 		response["message"] = "Registration successful! Email service not configured. Use the verification URL below."
 	}
 

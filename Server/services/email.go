@@ -88,7 +88,7 @@ func (es *EmailService) SendVerificationEmail(email, name, code string) error {
             
             <p><strong>This verification code will expire in 24 hours.</strong></p>
             
-            <p>Go to <a href="http://localhost:5174/verify-email" style="color: #8B4513; text-decoration: none; font-weight: bold;">eGebeya Verification Page</a> and enter this code to complete your registration.</p>
+            <p>Go to <a href="{{.FrontendURL}}/verify-email" style="color: #8B4513; text-decoration: none; font-weight: bold;">eGebeya Verification Page</a> and enter this code to complete your registration.</p>
             
             <p>Once verified, you'll be able to:</p>
             <ul>
@@ -120,10 +120,12 @@ func (es *EmailService) SendVerificationEmail(email, name, code string) error {
 		Name             string
 		Email            string
 		VerificationCode string
+		FrontendURL      string
 	}{
 		Name:             name,
 		Email:            email,
 		VerificationCode: code,
+		FrontendURL:      getEnv("FRONTEND_URL", "http://localhost:5174"),
 	}
 
 	if err := tmpl.Execute(&body, data); err != nil {
@@ -199,7 +201,7 @@ func (es *EmailService) SendWelcomeEmail(email, name string) error {
                 <li>💳 Make secure payments with Chapa or Stripe</li>
             </ul>
             
-            <p>Start your culinary journey now: <a href="http://localhost:5174/products">Browse Products</a></p>
+            <p>Start your culinary journey now: <a href="{{.FrontendURL}}/products">Browse Products</a></p>
         </div>
         <div class="footer">
             <p>© 2024 eGebeya. All rights reserved.</p>
