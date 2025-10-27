@@ -10,6 +10,7 @@ Server/node_modules
 
 # Go binaries
 Server/injera-server
+Server/Server
 Server/*.exe
 Server/*.dll
 Server/*.so
