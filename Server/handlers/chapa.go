@@ -158,6 +158,16 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 
 	// Creating Chapa payment for user
 
+	// Get frontend and backend URLs from environment
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost"
+	}
+	backendURL := os.Getenv("BACKEND_URL")
+	if backendURL == "" {
+		backendURL = "http://localhost:3000"
+	}
+
 	// Prepare the request data for Chapa API (real format)
 	requestData := map[string]interface{}{
 		"amount":       req.Amount,
@@ -168,8 +178,8 @@ func CreateChapaPayment(c *fiber.Ctx) error {
 		"phone_number": req.PhoneNumber,
 		"tx_ref":       req.TxRef,
 		// Server-to-server processing happens on callback_url; return_url sends user back to frontend with tx_ref
-		"callback_url": fmt.Sprintf("http://localhost:3000/api/chapa/callback?tx_ref=%s", req.TxRef),
-		"return_url":   fmt.Sprintf("http://localhost:5174/payment-success?tx_ref=%s", req.TxRef),
+		"callback_url": fmt.Sprintf("%s/api/chapa/callback?tx_ref=%s", backendURL, req.TxRef),
+		"return_url":   fmt.Sprintf("%s/payment-success?tx_ref=%s", frontendURL, req.TxRef),
 		"customization": map[string]string{
 			"title":       "Injera Order",
 			"description": "Payment for your delicious injera order",
@@ -311,44 +321,86 @@ func ChapaCallback(c *fiber.Ctx) error {
 	}
 
 	// Chapa callback received
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost"
+	}
+
 	if txRef == "" {
 		// If we still don't have txRef, redirect back with failure to avoid blank page
-		return c.Redirect("http://localhost:5174/payment-success?status=failed")
+		return c.Redirect(fmt.Sprintf("%s/payment-success?status=failed", frontendURL))
+	}
+
+	// Verify payment with Chapa API to ensure payment status is accurate
+	chapaSecretKey := os.Getenv("CHAPA_SECRET_KEY")
+	paymentStatus := "failed"
+
+	if chapaSecretKey != "" {
+		// Verify with Chapa API
+		verifyURL := fmt.Sprintf("https://api.chapa.co/v1/transaction/verify/%s", txRef)
+		httpReq, err := http.NewRequest("GET", verifyURL, nil)
+		if err == nil {
+			httpReq.Header.Set("Authorization", "Bearer "+chapaSecretKey)
+			client := &http.Client{Timeout: 10 * time.Second}
+			resp, err := client.Do(httpReq)
+			if err == nil {
+				defer resp.Body.Close()
+				body, _ := io.ReadAll(resp.Body)
+				var verifyResp ChapaVerifyResponse
+				if json.Unmarshal(body, &verifyResp) == nil {
+					if verifyResp.Status == "success" && verifyResp.Data.Status == "success" {
+						paymentStatus = "success"
+					}
+				}
+			}
+		}
+	} else {
+		// Fallback to callback status if verification fails
+		paymentStatus = status
 	}
 
 	// If payment was successful, create the order from pending order
-	if status == "success" {
+	if paymentStatus == "success" {
 		pendingOrder, exists := sessionStorage.GetPendingOrder(txRef)
 		if exists {
 			// Create the actual order
 			order, err := createOrderFromPending(pendingOrder, txRef)
 			if err != nil {
-				return c.Redirect("http://localhost:5174/payment-success?tx_ref=" + txRef + "&status=error")
+				return c.Redirect(fmt.Sprintf("%s/payment-success?tx_ref=%s&status=error", frontendURL, txRef))
 			}
 
 			// Clean up pending order
 			sessionStorage.DeletePendingOrder(txRef)
 			// Redirect with both order_id and tx_ref for robustness
-			return c.Redirect("http://localhost:5174/payment-success?status=success&order_id=" + fmt.Sprintf("%d", order.ID) + "&tx_ref=" + txRef)
+			return c.Redirect(fmt.Sprintf("%s/payment-success?status=success&order_id=%d&tx_ref=%s", frontendURL, order.ID, txRef))
 		} else {
-			return c.Redirect("http://localhost:5174/payment-success?tx_ref=" + txRef + "&status=success")
+			// Payment successful but no pending order - order might already exist
+			return c.Redirect(fmt.Sprintf("%s/payment-success?tx_ref=%s&status=success", frontendURL, txRef))
 		}
 	}
 
 	// If payment failed, clean up pending order
-	if status == "failed" {
-		sessionStorage.DeletePendingOrder(txRef)
-		return c.Redirect("http://localhost:5174/payment-success?status=failed&tx_ref=" + txRef)
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Callback received",
-		"status":  status,
-		"tx_ref":  txRef,
-	})
+	sessionStorage.DeletePendingOrder(txRef)
+	return c.Redirect(fmt.Sprintf("%s/payment-success?status=failed&tx_ref=%s", frontendURL, txRef))
 }
 
-// VerifyChapaPayment verifies a Chapa payment (for testing)
+// ChapaVerifyResponse represents the verification response from Chapa
+type ChapaVerifyResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		Status    string  `json:"status"`
+		TxRef     string  `json:"tx_ref"`
+		Amount    float64 `json:"amount"`
+		Currency  string  `json:"currency"`
+		Charge    float64 `json:"charge"`
+		Mode      string  `json:"mode"`
+		CreatedAt string  `json:"created_at"`
+		UpdatedAt string  `json:"updated_at"`
+	} `json:"data"`
+}
+
+// VerifyChapaPayment verifies a Chapa payment with Chapa API
 func VerifyChapaPayment(c *fiber.Ctx) error {
 	txRef := c.Params("tx_ref")
 
@@ -358,20 +410,113 @@ func VerifyChapaPayment(c *fiber.Ctx) error {
 		})
 	}
 
-	// In test mode, simulate payment verification
-
-	// Mock verification response
-	response := fiber.Map{
-		"message":        "Payment verified successfully (TEST MODE)",
-		"status":         "success",
-		"tx_ref":         txRef,
-		"payment_status": "completed",
-		"amount":         100.00, // Mock amount
-		"currency":       "ETB",
-		"test_mode":      true,
+	// Get Chapa secret key
+	chapaSecretKey := os.Getenv("CHAPA_SECRET_KEY")
+	if chapaSecretKey == "" {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Chapa secret key not configured",
+		})
 	}
 
-	return c.JSON(response)
+	// Call Chapa API to verify payment
+	verifyURL := fmt.Sprintf("https://api.chapa.co/v1/transaction/verify/%s", txRef)
+
+	httpReq, err := http.NewRequest("GET", verifyURL, nil)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to create verification request",
+		})
+	}
+
+	httpReq.Header.Set("Authorization", "Bearer "+chapaSecretKey)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to connect to Chapa API",
+		})
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to read Chapa response",
+		})
+	}
+
+	// Parse response
+	var verifyResp ChapaVerifyResponse
+	if err := json.Unmarshal(body, &verifyResp); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Invalid response from Chapa API",
+			"raw":   string(body),
+		})
+	}
+
+	// Check if payment was successful
+	if verifyResp.Status == "success" && verifyResp.Data.Status == "success" {
+		// Payment is successful - check if order exists, if not, create from pending
+		user := c.Locals("user").(models.User)
+
+		// Check if order already exists
+		var existingOrder models.Order
+		if err := config.DB.Where("payment_id = ? AND user_id = ?", txRef, user.ID).First(&existingOrder).Error; err == nil {
+			// Order already exists
+			return c.JSON(fiber.Map{
+				"message":        "Payment verified successfully",
+				"status":         "success",
+				"tx_ref":         txRef,
+				"payment_status": "completed",
+				"order_id":       existingOrder.ID,
+				"order":          existingOrder,
+			})
+		}
+
+		// Order doesn't exist - try to create from pending order
+		pendingOrder, exists := sessionStorage.GetPendingOrder(txRef)
+		if exists {
+			order, err := createOrderFromPending(pendingOrder, txRef)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error":   "Payment verified but failed to create order",
+					"details": err.Error(),
+				})
+			}
+
+			sessionStorage.DeletePendingOrder(txRef)
+
+			return c.JSON(fiber.Map{
+				"message":        "Payment verified and order created successfully",
+				"status":         "success",
+				"tx_ref":         txRef,
+				"payment_status": "completed",
+				"order_id":       order.ID,
+				"order":          order,
+			})
+		}
+
+		// Payment verified but no pending order found
+		return c.JSON(fiber.Map{
+			"message":        "Payment verified successfully",
+			"status":         "success",
+			"tx_ref":         txRef,
+			"payment_status": "completed",
+			"amount":         verifyResp.Data.Amount,
+			"currency":       verifyResp.Data.Currency,
+			"note":           "Payment verified but order not found",
+		})
+	}
+
+	// Payment not successful or pending
+	return c.JSON(fiber.Map{
+		"message":        "Payment verification failed",
+		"status":         verifyResp.Status,
+		"payment_status": verifyResp.Data.Status,
+		"tx_ref":         txRef,
+		"chapa_response": verifyResp,
+	})
 }
 
 // createOrderFromPending creates an order from a pending order

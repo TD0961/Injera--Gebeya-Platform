@@ -46,14 +46,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     setUser(null);
     localStorage.removeItem('user');
     // Clear the auth cookie by calling logout endpoint
-    axios.post('http://localhost:3000/api/logout', {}, { withCredentials: true })
+    axios.post('/api/logout', {}, { withCredentials: true })
       .catch(() => {}); // Ignore errors on logout
   };
 
   const checkAuth = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/me', {
+      const response = await axios.get('/api/me', {
         withCredentials: true,
       });
       

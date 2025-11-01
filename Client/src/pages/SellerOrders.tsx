@@ -83,7 +83,7 @@ export default function SellerOrders() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/seller/orders', {
+      const response = await fetch('/api/seller/orders', {
         credentials: 'include',
       });
 
@@ -103,7 +103,7 @@ export default function SellerOrders() {
   const updateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
       setUpdatingStatus(orderId);
-      const response = await fetch(`http://localhost:3000/api/orders/${orderId}/status`, {
+      const response = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

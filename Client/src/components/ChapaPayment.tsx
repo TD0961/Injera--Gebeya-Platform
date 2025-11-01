@@ -56,7 +56,7 @@ export default function ChapaPayment({ amount, phoneNumber, shippingData, cartIt
 
         console.log('📦 Storing pending order:', pendingOrderData);
 
-        const pendingResponse = await fetch('http://localhost:3000/api/store-pending-order', {
+        const pendingResponse = await fetch('/api/store-pending-order', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ export default function ChapaPayment({ amount, phoneNumber, shippingData, cartIt
       console.log('🚀 Initiating Chapa payment:', paymentData);
 
       // Call backend to create Chapa payment
-      const response = await fetch('http://localhost:3000/api/create-chapa-payment', {
+      const response = await fetch('/api/create-chapa-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

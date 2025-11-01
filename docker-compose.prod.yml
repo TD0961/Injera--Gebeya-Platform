@@ -66,18 +66,33 @@ services:
       context: ./Server
       dockerfile: Dockerfile
     
-    # Environment file
-    # What: Loads production environment variables
-    # Why: Keeps sensitive data separate from code
-    # Where: From env.prod file
-    env_file:
-      - env.prod
-    
     # Container name
     # What: Sets a specific name for the container
     # Why: Makes it easier to reference the container
     # Where: Container naming
     container_name: egebeya-backend
+    
+    # Environment variables
+    # What: Sets backend configuration
+    # Why: Backend needs these to connect to database and configure services
+    # Where: Environment configuration
+    environment:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      DB_NAME: egebeya
+      DB_PORT: "5432"
+      JWT_SECRET: ${JWT_SECRET:-test_secret_change_in_production}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:3000}
+      CHAPA_SECRET_KEY: ${CHAPA_SECRET_KEY:-CHASECK_TEST-fnGvtP8fBikY8JetWMgLZX3f3aJ6n7Vi}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
     
     # Restart policy
     # What: Restarts container if it stops
@@ -118,13 +133,6 @@ services:
     build:
       context: ./Client
       dockerfile: Dockerfile
-    
-    # Environment file
-    # What: Loads production environment variables
-    # Why: Keeps sensitive data separate from code
-    # Where: From env.prod file
-    env_file:
-      - env.prod
     
     # Container name
     # What: Sets a specific name for the container

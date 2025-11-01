@@ -36,7 +36,7 @@ export default function SellerDashboard() {
 
   async function fetchSellerName() {
     try {
-      const res = await axios.get("http://localhost:3000/api/me", {
+      const res = await axios.get("/api/me", {
         withCredentials: true,
       });
       setSellerName(res.data.name);

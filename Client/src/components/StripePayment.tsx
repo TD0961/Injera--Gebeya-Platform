@@ -29,7 +29,7 @@ function PaymentForm({ amount, onSuccess, onError }: StripePaymentProps) {
   useEffect(() => {
     const createPaymentIntent = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/create-payment-intent', {
+        const response = await fetch('/api/create-payment-intent', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

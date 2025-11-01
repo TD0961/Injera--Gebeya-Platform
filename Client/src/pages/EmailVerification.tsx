@@ -37,7 +37,7 @@ export default function EmailVerification() {
   const verifyEmail = async (verificationCode: string) => {
     setIsVerifying(true);
     try {
-      const response = await fetch('http://localhost:3000/api/verify-email', {
+      const response = await fetch('/api/verify-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ export default function EmailVerification() {
     
     setIsResending(true);
     try {
-      const response = await fetch('http://localhost:3000/api/resend-verification', {
+      const response = await fetch('/api/resend-verification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
