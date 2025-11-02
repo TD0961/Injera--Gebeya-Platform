@@ -39,6 +39,9 @@ dist
 dist-ssr
 *.local
 
+# Fly.io deployment files (keep in git for deployment)
+# fly.toml files should be committed for GitHub deployment
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

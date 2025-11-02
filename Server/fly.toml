@@ -1,0 +1,34 @@
+# fly.toml app configuration file generated for egebeya-api on 2025-11-02T12:29:30+03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'egebeya-api'
+primary_region = 'ams'
+
+[build]
+  dockerfile = "Dockerfile"
+  context = "."
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
