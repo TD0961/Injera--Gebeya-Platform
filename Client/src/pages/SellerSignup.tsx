@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import bgImg from '../assets/hero.jpg';
 
 export default function SellerSignup() {
@@ -86,7 +86,6 @@ export default function SellerSignup() {
       className="min-h-screen flex items-center justify-center bg-cover bg-center px-2"
       style={{ backgroundImage: `url(${bgImg})` }}
     >
-      <Toaster />
       <div className="bg-white bg-opacity-80 backdrop-blur-md rounded-2xl shadow-xl w-full max-w-md p-8">
         <h2 className="text-2xl font-bold text-green-800 mb-2">Become a Seller</h2>
         <p className="text-gray-500 mb-6 text-sm">

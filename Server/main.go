@@ -6,7 +6,9 @@ import (
 	"injera-gebeya-platform/Server/handlers"
 	"injera-gebeya-platform/Server/middleware"
 	"injera-gebeya-platform/Server/models"
+	"injera-gebeya-platform/Server/services"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -49,7 +51,27 @@ func main() {
 	})
 
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "ok"})
+		// Check database connection
+		sqlDB, err := config.DB.DB()
+		dbStatus := "ok"
+		if err != nil {
+			dbStatus = "error: " + err.Error()
+		} else {
+			if err := sqlDB.Ping(); err != nil {
+				dbStatus = "error: " + err.Error()
+			}
+		}
+
+		// Check email configuration
+		emailService := services.NewEmailService()
+		emailConfigured := emailService.IsEmailConfigured()
+
+		return c.JSON(fiber.Map{
+			"status":           "ok",
+			"database":         dbStatus,
+			"email_configured": emailConfigured,
+			"timestamp":        time.Now().Unix(),
+		})
 	})
 
 	// Authentication routes

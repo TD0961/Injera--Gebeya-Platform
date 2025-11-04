@@ -79,11 +79,11 @@ RUN mkdir -p /var/run/nginx && \
     chown -R nginx:nginx /var/run/nginx && \
     chmod 755 /var/run/nginx
 
-# Switch to non-root user
-# What: Changes from root user to nginx
-# Why: Security best practice - don't run as root
-# Where: Changes user context for subsequent commands
-USER nginx
+# Keep running as root for Fly.io
+# What: Nginx needs to bind to port 80, which requires root or capabilities
+# Why: Fly.io handles security at the platform level, so root is safe here
+# Where: Container runs as root user
+# Note: We previously set USER nginx, but port 80 binding requires root
 
 # Expose port
 # What: Documents that the application uses port 80
@@ -101,5 +101,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Run Nginx
 # What: Starts Nginx web server when container starts
 # Why: This serves the React application
-# Where: Executes in container as nginx user
+# Where: Executes in container as root (required for port 80 binding on Fly.io)
 CMD ["nginx", "-g", "daemon off;"]

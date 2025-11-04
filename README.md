@@ -54,31 +54,31 @@ For production deployment, see [PRODUCTION.md](PRODUCTION.md) for Docker-based s
 ### Installation
 
 1. **Clone the repository**
-   ```bash
+    ```bash
    git clone https://github.com/TD0961/Injera--Gebeya-Platform.git
    cd Injera--Gebeya-Platform
-   ```
+    ```
 
 2. **Setup Database**
-   ```bash
+    ```bash
    docker-compose up -d
-   ```
+    ```
 
 3. **Backend Setup**
-   ```bash
+    ```bash
    cd Server
    cp .env.example .env  # Configure your environment variables
    go mod download
    go run main.go
-   ```
+    ```
 
 4. **Frontend Setup**
-   ```bash
+    ```bash
    cd Client
    cp .env.example .env  # Configure your environment variables
    npm install
    npm run dev
-   ```
+    ```
 
 5. **Access the Application**
    - Frontend: http://localhost:5174
@@ -87,7 +87,7 @@ For production deployment, see [PRODUCTION.md](PRODUCTION.md) for Docker-based s
 ## 🔧 Environment Variables
 
 ### Server (.env)
-```bash
+      ```bash
 DB_HOST=localhost
 DB_USER=postgres
 DB_PASSWORD=your_password
@@ -104,7 +104,7 @@ FROM_EMAIL=noreply@eGebeya.com
 ```
 
 ### Client (.env)
-```bash
+      ```bash
 VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
 
@@ -168,7 +168,7 @@ Injera--Gebeya-Platform/
 - [ ] Set up CI/CD pipeline
 
 ### Docker Deployment
-```bash
+    ```bash
 # Build and run with Docker Compose
 docker-compose -f docker-compose.prod.yml up -d
 ```

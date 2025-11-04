@@ -18,7 +18,7 @@ import {
 
 export default function SellerDashboard() {
   const navigate = useNavigate();
-  const { logout } = useUser();
+  const { logout, user } = useUser();
   const [activeTab, setActiveTab] = useState<"products" | "add" | "orders">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,9 +30,15 @@ export default function SellerDashboard() {
   };
 
   useEffect(() => {
-    fetchProducts();
-    fetchSellerName();
-  }, []);
+    // Only fetch if user is authenticated and is a seller
+    if (user && user.role === 'seller') {
+      fetchProducts(false); // Don't show error toast on initial load
+      fetchSellerName();
+    } else if (!user) {
+      // If not authenticated, redirect to login
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   async function fetchSellerName() {
     try {
@@ -45,7 +51,7 @@ export default function SellerDashboard() {
     }
   }
 
-  async function fetchProducts() {
+  async function fetchProducts(showError: boolean = false) {
     try {
       setLoading(true);
       const data = await getMyProducts();
@@ -57,9 +63,16 @@ export default function SellerDashboard() {
         image: p.image_url || "",
       })) as Product[];
       setProducts(mapped);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Could not fetch products", err);
-      toast.error("Failed to load products");
+      // Only show error toast if explicitly requested (e.g., manual refresh)
+      // Don't show on initial page load
+      if (showError) {
+        const status = err.response?.status;
+        if (status !== 401 && status !== 403) {
+          toast.error("Failed to load products");
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -104,7 +117,7 @@ export default function SellerDashboard() {
       await apiUpdateProduct(updated.id, payload);
       toast.dismiss();
       toast.success("✅ Product updated successfully!");
-      await fetchProducts();
+      await fetchProducts(false); // Silent refresh after update
     } catch (err) {
       toast.dismiss();
       console.error(err);
@@ -118,7 +131,7 @@ export default function SellerDashboard() {
       await apiDeleteProduct(id);
       toast.dismiss();
       toast.success("🗑️ Product deleted successfully!");
-      await fetchProducts();
+      await fetchProducts(false); // Silent refresh after delete
     } catch (err) {
       toast.dismiss();
       console.error(err);

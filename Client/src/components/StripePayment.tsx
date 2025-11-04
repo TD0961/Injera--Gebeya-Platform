@@ -9,7 +9,9 @@ import {
 import { useUser } from '../contexts/UserContext';
 
 // Initialize Stripe with publishable key from environment
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Only load Stripe if key is provided
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 interface StripePaymentProps {
   amount: number;
@@ -159,6 +161,15 @@ function PaymentForm({ amount, onSuccess, onError }: StripePaymentProps) {
 
 // Main Stripe payment component
 export default function StripePayment({ amount, onSuccess, onError }: StripePaymentProps) {
+  // Don't render if Stripe is not configured
+  if (!stripePromise) {
+    return (
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p className="text-yellow-800">Stripe payment is not configured. Please use Chapa payment instead.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
       <div className="flex items-center gap-3 mb-4">

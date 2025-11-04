@@ -26,7 +26,33 @@ func NewEmailService() *EmailService {
 		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
 	}
 	es.FromEmail = getEnv("FROM_EMAIL", es.SMTPUsername)
+
+	// Log email configuration status (without sensitive data)
+	log.Printf("📧 Email Service initialized:")
+	log.Printf("   SMTP Host: %s", es.SMTPHost)
+	log.Printf("   SMTP Port: %s", es.SMTPPort)
+	log.Printf("   SMTP Username: %s (length: %d)", maskEmail(es.SMTPUsername), len(es.SMTPUsername))
+	log.Printf("   From Email: %s", maskEmail(es.FromEmail))
+	log.Printf("   SMTP Password configured: %v (length: %d)", es.SMTPPassword != "", len(es.SMTPPassword))
+	log.Printf("   Email service configured: %v", es.IsEmailConfigured())
+
+	// Debug: Check environment variables directly
+	envUsername := os.Getenv("SMTP_USERNAME")
+	envPassword := os.Getenv("SMTP_PASSWORD")
+	log.Printf("   DEBUG - SMTP_USERNAME from env: %s (length: %d)", maskEmail(envUsername), len(envUsername))
+	log.Printf("   DEBUG - SMTP_PASSWORD from env: %v (length: %d)", envPassword != "", len(envPassword))
+
 	return es
+}
+
+func maskEmail(email string) string {
+	if email == "" {
+		return "(not set)"
+	}
+	if len(email) <= 3 {
+		return "***"
+	}
+	return email[:3] + "***"
 }
 
 func getEnv(key, defaultValue string) string {
@@ -45,9 +71,15 @@ func (es *EmailService) GenerateVerificationCode() (string, error) {
 
 // SendVerificationEmail sends email verification to user
 func (es *EmailService) SendVerificationEmail(email, name, code string) error {
+	// Always log verification code for debugging (even when email is sent)
+	log.Printf("📧 Verification code for %s (%s): %s", email, name, code)
+
 	// Check if email service is configured
 	if !es.IsEmailConfigured() {
-		log.Printf("⚠️ Email service not configured. Verification code for %s: %s", email, code)
+		log.Printf("⚠️ Email service not configured!")
+		log.Printf("   SMTP_USERNAME: %s", maskEmail(es.SMTPUsername))
+		log.Printf("   SMTP_PASSWORD: %v", es.SMTPPassword != "")
+		log.Printf("   Code logged above: %s", code)
 		return fmt.Errorf("email service not configured")
 	}
 
@@ -155,9 +187,15 @@ func (es *EmailService) SendVerificationEmail(email, name, code string) error {
 	log.Printf("📧 Attempting to send email to: %s", email)
 	log.Printf("📧 SMTP Server: %s", addr)
 	log.Printf("📧 From: %s", es.FromEmail)
+	log.Printf("📧 SMTP Username: %s", maskEmail(es.SMTPUsername))
 
 	if err := smtp.SendMail(addr, auth, es.FromEmail, []string{email}, []byte(message)); err != nil {
 		log.Printf("❌ Failed to send email to %s: %v", email, err)
+		log.Printf("❌ Error details: %+v", err)
+		// Log more context for common SMTP errors
+		if err.Error() != "" {
+			log.Printf("❌ SMTP Error message: %s", err.Error())
+		}
 		return fmt.Errorf("failed to send email: %v", err)
 	}
 

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -47,6 +48,7 @@ func ConnectDatabase() {
 	)
 
 	fmt.Printf("🔗 Attempting to connect to database: %s@%s:%s/%s\n", user, host, port, dbname)
+	log.Printf("📊 Database connection details: host=%s, port=%s, dbname=%s, user=%s", host, port, dbname, user)
 
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

@@ -46,7 +46,7 @@ export default function ProductListing() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:3000/products");
+        const res = await axios.get("/api/products");
         const updatedProducts: Product[] = res.data.map((p: any) => ({
           id: p.ID || p.id, // Fix: Use ID (uppercase) first, fallback to id
           name: p.name,
@@ -341,7 +341,7 @@ export default function ProductListing() {
                     product.image_url
                       ? product.image_url.startsWith("http")
                         ? product.image_url
-                        : `http://localhost:3000/${product.image_url}`
+                        : `/api/${product.image_url}`
                       : "https://via.placeholder.com/300x200?text=No+Image"
                   }
                   alt={product.name}

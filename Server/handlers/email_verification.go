@@ -37,21 +37,123 @@ func VerifyEmail(c *fiber.Ctx) error {
 
 	// Find pending registration by verification code
 	var pendingReg models.PendingRegistration
-	result := config.DB.Where("verification_token = ? AND verification_expiry > ?", req.Code, time.Now()).First(&pendingReg)
+	// Use Unscoped() to find pending registrations including soft-deleted ones
+	result := config.DB.Unscoped().Where("verification_token = ? AND verification_expiry > ?", req.Code, time.Now()).First(&pendingReg)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
+			log.Printf("⚠️ Verification code not found or expired: %s", req.Code)
+			// Try to find by code without expiry check (for debugging)
+			var debugPending models.PendingRegistration
+			if debugErr := config.DB.Unscoped().Where("verification_token = ?", req.Code).First(&debugPending).Error; debugErr == nil {
+				log.Printf("🔍 Found code but expired: email=%s, expiry=%v, now=%v", debugPending.Email, debugPending.VerificationExpiry, time.Now())
+			}
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Invalid or expired verification code",
 			})
 		}
 		// Log error for monitoring
+		log.Printf("❌ Error finding pending registration: %v", result.Error)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Internal server error",
 		})
 	}
 
-	// Create actual user from pending registration
+	log.Printf("📋 Verification request: code=%s, found pendingReg ID=%d, email=%s, role=%s, shopName=%s", req.Code, pendingReg.ID, pendingReg.Email, pendingReg.Role, pendingReg.ShopName)
+
+	log.Printf("✅ Found pending registration for email: %s, role: %s, shopName: %s", pendingReg.Email, pendingReg.Role, pendingReg.ShopName)
+
+	// Use UPSERT (INSERT ... ON CONFLICT DO UPDATE) as the primary method
+	log.Printf("🔄 Verifying user via UPSERT: email=%s, role=%s, shopName=%s", pendingReg.Email, pendingReg.Role, pendingReg.ShopName)
+
+	sqlDB, sqlErr := config.DB.DB()
+	if sqlErr != nil {
+		log.Printf("❌ Failed to get SQL DB: %v", sqlErr)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Database connection error",
+		})
+	}
+
+	// UPSERT: Insert or update user atomically
+	var userID uint
+	upsertQuery := `INSERT INTO users (name, email, password, address, role, shop_name, email_verified, verification_token, created_at, updated_at, deleted_at)
+		VALUES ($1, $2, $3, $4, $5, $6, true, NULL, NOW(), NOW(), NULL)
+		ON CONFLICT (email) DO UPDATE SET
+			name = EXCLUDED.name,
+			password = EXCLUDED.password,
+			address = EXCLUDED.address,
+			role = EXCLUDED.role,
+			shop_name = EXCLUDED.shop_name,
+			email_verified = true,
+			verification_token = NULL,
+			updated_at = NOW(),
+			deleted_at = NULL
+		RETURNING id`
+
+	upsertErr := sqlDB.QueryRow(upsertQuery,
+		pendingReg.Name, pendingReg.Email, pendingReg.Password,
+		pendingReg.Address, pendingReg.Role, pendingReg.ShopName).Scan(&userID)
+
+	if upsertErr == nil {
+		config.DB.Delete(&pendingReg)
+		log.Printf("✅ User verified via UPSERT: ID=%d", userID)
+		emailService := services.NewEmailService()
+		if emailService.IsEmailConfigured() {
+			go func() {
+				emailService.SendWelcomeEmail(pendingReg.Email, pendingReg.Name)
+			}()
+		}
+		return c.JSON(fiber.Map{
+			"message": "Email verified successfully! You can now log in.",
+			"user": fiber.Map{
+				"id":    userID,
+				"name":  pendingReg.Name,
+				"email": pendingReg.Email,
+				"role":  pendingReg.Role,
+			},
+		})
+	}
+
+	// Fallback: Direct UPDATE if UPSERT fails
+	log.Printf("⚠️ UPSERT failed: %v, trying direct UPDATE...", upsertErr)
+	updateQuery := `UPDATE users SET 
+		name = $1, password = $2, address = $3, role = $4, shop_name = $5, 
+		email_verified = true, verification_token = NULL, updated_at = NOW(), deleted_at = NULL
+		WHERE email = $6`
+	updateResult, updateErr := sqlDB.Exec(updateQuery,
+		pendingReg.Name, pendingReg.Password, pendingReg.Address,
+		pendingReg.Role, pendingReg.ShopName, pendingReg.Email)
+
+	if updateErr == nil {
+		rowsAffected, _ := updateResult.RowsAffected()
+		if rowsAffected > 0 {
+			var updatedID uint
+			sqlDB.QueryRow("SELECT id FROM users WHERE email = $1", pendingReg.Email).Scan(&updatedID)
+			config.DB.Delete(&pendingReg)
+			log.Printf("✅ User verified via UPDATE: ID=%d", updatedID)
+			emailService := services.NewEmailService()
+			if emailService.IsEmailConfigured() {
+				go func() {
+					emailService.SendWelcomeEmail(pendingReg.Email, pendingReg.Name)
+				}()
+			}
+			return c.JSON(fiber.Map{
+				"message": "Email verified successfully! You can now log in.",
+				"user": fiber.Map{
+					"id":    updatedID,
+					"name":  pendingReg.Name,
+					"email": pendingReg.Email,
+					"role":  pendingReg.Role,
+				},
+			})
+		}
+		log.Printf("⚠️ UPDATE affected 0 rows")
+	} else {
+		log.Printf("⚠️ UPDATE failed: %v", updateErr)
+	}
+
+	// Final fallback: GORM Create (shouldn't reach here if UPSERT works)
+	log.Printf("❌ UPDATE also failed: %v, trying GORM Create...", updateErr)
 	user := models.User{
 		Name:              pendingReg.Name,
 		Email:             pendingReg.Email,
@@ -60,28 +162,24 @@ func VerifyEmail(c *fiber.Ctx) error {
 		Role:              pendingReg.Role,
 		ShopName:          pendingReg.ShopName,
 		EmailVerified:     true,
-		VerificationToken: "", // Clear verification token
+		VerificationToken: "", // Will be set to NULL by GORM if empty
 	}
 
-	// Create the user in the database
 	if err := config.DB.Create(&user).Error; err != nil {
-		log.Printf("Error creating user: %v", err)
+		log.Printf("❌ All methods failed: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create user account",
+			"error": "Failed to verify user account. Please try again.",
 		})
 	}
 
-	// Delete the pending registration
 	config.DB.Delete(&pendingReg)
-
-	// Send welcome email
+	log.Printf("✅ User created via GORM: ID=%d", user.ID)
 	emailService := services.NewEmailService()
 	if emailService.IsEmailConfigured() {
 		go func() {
 			emailService.SendWelcomeEmail(user.Email, user.Name)
 		}()
 	}
-
 	return c.JSON(fiber.Map{
 		"message": "Email verified successfully! You can now log in.",
 		"user": fiber.Map{

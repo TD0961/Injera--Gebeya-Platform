@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useUser } from "../contexts/UserContext";
 import bgImg from "../assets/hero.jpg";
 
@@ -70,7 +70,6 @@ export default function Login() {
       className="min-h-screen flex items-center justify-center bg-cover bg-center px-4"
       style={{ backgroundImage: `url(${bgImg})` }}
     >
-      <Toaster />
       <div className="bg-white bg-opacity-85 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md p-8">
         <h2 className="text-3xl font-extrabold text-green-800 mb-2 text-center">
           Welcome Back

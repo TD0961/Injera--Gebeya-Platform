@@ -61,6 +61,13 @@ export default function EmailVerification() {
       } else {
         setVerificationStatus('error');
         setMessage(data.error || 'Verification failed');
+        // If user is already verified, show different message
+        if (data.message && data.message.includes('already verified')) {
+          setMessage('Email is already verified. Please log in.');
+          setTimeout(() => {
+            navigate('/login');
+          }, 2000);
+        }
       }
     } catch (error) {
       setVerificationStatus('error');

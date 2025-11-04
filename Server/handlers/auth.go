@@ -26,6 +26,16 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
 	}
 
+	// Validate role
+	if input.Role != "buyer" && input.Role != "seller" {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid role. Must be 'buyer' or 'seller'"})
+	}
+
+	// Validate seller-specific fields
+	if input.Role == "seller" && input.ShopName == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Shop name is required for sellers"})
+	}
+
 	// Hash password
 	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), 12)
 	if err != nil {
@@ -81,26 +91,32 @@ func Register(c *fiber.Ctx) error {
 		}
 	}
 
-	// Send verification email
+	// Send verification email (in background)
 	emailSent := false
 	if emailService.IsEmailConfigured() {
 		go func() {
-			emailService.SendVerificationEmail(input.Email, input.Name, code)
+			if err := emailService.SendVerificationEmail(input.Email, input.Name, code); err != nil {
+				// Error is already logged in SendVerificationEmail
+				// Verification code is also logged there for fallback
+			}
 		}()
 		emailSent = true
 	}
 
+	// Always include verification code in response for fallback (even if email is configured)
+	// This ensures users can verify even if email fails to send
 	response := fiber.Map{
 		"message":              "Registration successful! Please verify your account.",
 		"email":                input.Email,
 		"requiresVerification": true,
+		"verificationCode":     code,
+		"verificationURL":      os.Getenv("FRONTEND_URL") + "/verify-email",
 	}
 
-	// Include verification token in development mode when email is not configured
 	if !emailSent {
-		response["verificationCode"] = code
-		response["verificationURL"] = os.Getenv("FRONTEND_URL") + "/verify-email"
-		response["message"] = "Registration successful! Email service not configured. Use the verification URL below."
+		response["message"] = "Registration successful! Email service not configured. Please use the verification code below."
+	} else {
+		response["message"] = "Registration successful! Check your email for verification code (also shown below as backup)."
 	}
 
 	return c.Status(201).JSON(response)
